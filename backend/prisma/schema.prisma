@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  company   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  chatSessions ChatSession[]
+  tickets      Ticket[]
+  activities   CustomerActivity[]
+
+  @@map("customers")
+}
+
+model ChatSession {
+  id         String    @id @default(uuid())
+  customerId String    @map("customer_id")
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  agentId    String?   @map("agent_id")
+  status     String    @default("active") // active, closed
+  startedAt  DateTime  @default(now()) @map("started_at")
+  endedAt    DateTime? @map("ended_at")
+
+  messages ChatMessage[]
+  tickets  Ticket[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id         String      @id @default(uuid())
+  sessionId  String      @map("session_id")
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  senderType String      @map("sender_type") // customer, agent
+  senderId   String      @map("sender_id")
+  content    String
+  sentAt     DateTime    @default(now()) @map("sent_at")
+
+  @@map("chat_messages")
+}
+
+model Ticket {
+  id            String       @id @default(uuid())
+  ticketNumber  String       @unique @map("ticket_number")
+  customerId    String       @map("customer_id")
+  customer      Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  chatSessionId String?      @map("chat_session_id")
+  chatSession   ChatSession? @relation(fields: [chatSessionId], references: [id], onDelete: SetNull)
+  subject       String
+  description   String
+  status        String       @default("open") // open, in_progress, resolved, closed
+  priority      String       @default("medium") // low, medium, high, urgent
+  assignedTo    String?      @map("assigned_to")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  resolvedAt    DateTime?    @map("resolved_at")
+
+  comments TicketComment[]
+
+  @@map("tickets")
+}
+
+model TicketComment {
+  id         String   @id @default(uuid())
+  ticketId   String   @map("ticket_id")
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id")
+  comment    String
+  isInternal Boolean  @default(false) @map("is_internal")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("ticket_comments")
+}
+
+model CustomerActivity {
+  id           String   @id @default(uuid())
+  customerId   String   @map("customer_id")
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  activityType String   @map("activity_type") // chat, ticket_created, ticket_updated, ticket_closed
+  referenceId  String   @map("reference_id")
+  description  String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("customer_activities")
+}
