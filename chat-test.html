@@ -4,52 +4,231 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Chat Test Client</title>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { background: #0084ff; color: white; padding: 20px; border-radius: 10px 10px 0 0; }
-        .chat-form { padding: 20px; border-bottom: 1px solid #eee; }
-        .chat-form input { width: 200px; padding: 10px; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .chat-form button { padding: 10px 20px; background: #0084ff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .chat-form button:hover { background: #0073e6; }
-        .messages { height: 400px; overflow-y: auto; padding: 20px; }
-        .message { margin-bottom: 15px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; }
+        .header h1 { font-size: 28px; margin-bottom: 8px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        
+        .chat-form { padding: 25px; border-bottom: 2px solid #e4e6eb; background: #f8f9fa; }
+        .form-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .chat-form input { 
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        .chat-form input:focus { 
+            outline: none; 
+            border-color: #667eea; 
+        }
+        .chat-form button { 
+            padding: 12px 32px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .chat-form button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .chat-form button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status { 
+            padding: 15px 25px; 
+            background: #fff3cd; 
+            color: #856404;
+            font-size: 14px; 
+            font-weight: 500;
+            border-left: 4px solid #ffc107;
+        }
+        .status.connected { 
+            background: #d4edda; 
+            color: #155724; 
+            border-left-color: #28a745;
+        }
+        .status.error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border-left-color: #dc3545;
+        }
+        
+        .debug { 
+            padding: 12px 25px; 
+            background: #e9ecef; 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px; 
+            color: #495057;
+            border-top: 1px solid #dee2e6;
+        }
+        .debug strong { color: #212529; }
+        
+        .typing { 
+            padding: 12px 25px; 
+            font-style: italic; 
+            color: #667eea; 
+            font-size: 13px; 
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .messages { 
+            height: 450px; 
+            overflow-y: auto; 
+            padding: 25px; 
+            background: #fafbfc;
+        }
+        .messages::-webkit-scrollbar { width: 8px; }
+        .messages::-webkit-scrollbar-track { background: #f1f1f1; }
+        .messages::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        
+        .message { 
+            margin-bottom: 20px; 
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .message.customer { text-align: right; }
         .message.agent { text-align: left; }
-        .message-bubble { display: inline-block; padding: 10px 15px; border-radius: 18px; max-width: 70%; }
-        .message.customer .message-bubble { background: #0084ff; color: white; }
-        .message.agent .message-bubble { background: #e4e6eb; color: black; }
-        .sender-name { font-size: 12px; color: #65676b; margin-bottom: 5px; }
-        .input-area { padding: 20px; border-top: 1px solid #eee; display: flex; gap: 10px; }
-        .input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; }
-        .input-area button { padding: 10px 20px; background: #0084ff; color: white; border: none; border-radius: 20px; cursor: pointer; }
-        .status { padding: 10px 20px; background: #f0f2f5; font-size: 14px; color: #65676b; }
-        .typing { font-style: italic; color: #0084ff; font-size: 14px; padding: 10px 20px; }
+        .message-bubble { 
+            display: inline-block; 
+            padding: 12px 18px; 
+            border-radius: 18px; 
+            max-width: 70%; 
+            word-wrap: break-word;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .message.customer .message-bubble { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+        }
+        .message.agent .message-bubble { 
+            background: white; 
+            color: #333;
+            border: 1px solid #e4e6eb;
+        }
+        .sender-name { 
+            font-size: 11px; 
+            color: #65676b; 
+            margin-bottom: 6px; 
+            font-weight: 600;
+        }
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        .system-message {
+            text-align: center;
+            color: #65676b;
+            font-size: 13px;
+            margin: 15px 0;
+            padding: 8px;
+            background: #f0f2f5;
+            border-radius: 8px;
+        }
+        
+        .input-area { 
+            padding: 20px 25px; 
+            border-top: 2px solid #e4e6eb; 
+            display: flex; 
+            gap: 12px; 
+            background: white;
+        }
+        .input-area input { 
+            flex: 1; 
+            padding: 14px 20px; 
+            border: 2px solid #e4e6eb; 
+            border-radius: 24px; 
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        .input-area input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .input-area button { 
+            padding: 14px 28px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            border: none; 
+            border-radius: 24px; 
+            cursor: pointer; 
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .input-area button:hover { 
+            transform: scale(1.05);
+        }
+        .input-area button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #65676b;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🚀 Live Chat Test Client</h1>
-            <p>Test WebSocket connection</p>
+            <p>Test WebSocket Real-time Communication</p>
         </div>
 
         <div class="chat-form">
-            <input type="email" id="email" placeholder="Email của bạn" value="test@example.com">
-            <input type="text" id="name" placeholder="Tên của bạn" value="Test User">
-            <button onclick="startChat()">Bắt đầu Chat</button>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="📧 Email của bạn" value="customer@example.com">
+                <input type="text" id="name" placeholder="👤 Tên của bạn" value="Customer Test">
+                <button onclick="startChat()" id="startBtn">Bắt đầu Chat</button>
+            </div>
         </div>
 
-        <div class="status" id="status">Chưa kết nối</div>
+        <div class="status" id="status">⏳ Chưa kết nối - Nhấn "Bắt đầu Chat" để kết nối</div>
+        
+        <div class="debug" id="debug">
+            <strong>Debug Info:</strong> Đang chờ kết nối...
+        </div>
         
         <div class="typing" id="typing" style="display: none;"></div>
 
-        <div class="messages" id="messages"></div>
+        <div class="messages" id="messages">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                </svg>
+                <p>Chưa có tin nhắn nào</p>
+            </div>
+        </div>
 
         <div class="input-area">
-            <input type="text" id="messageInput" placeholder="Nhập tin nhắn..." disabled>
+            <input type="text" id="messageInput" placeholder="💬 Nhập tin nhắn..." disabled>
             <button onclick="sendMessage()" id="sendBtn" disabled>Gửi</button>
         </div>
     </div>
@@ -59,23 +238,55 @@
         let sessionId;
         let customerId;
         let customerName;
+        let isConnected = false;
+
+        function updateStatus(text, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = text;
+            statusEl.className = 'status ' + type;
+        }
+
+        function updateDebug(text) {
+            document.getElementById('debug').innerHTML = '<strong>Debug Info:</strong> ' + text;
+        }
 
         function startChat() {
-            const email = document.getElementById('email').value;
-            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value.trim();
+            const name = document.getElementById('name').value.trim();
+            const startBtn = document.getElementById('startBtn');
 
             if (!email || !name) {
-                alert('Vui lòng nhập email và tên');
+                alert('⚠️ Vui lòng nhập đầy đủ email và tên');
+                return;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('⚠️ Email không hợp lệ');
                 return;
             }
 
             customerName = name;
+            startBtn.disabled = true;
+            startBtn.textContent = 'Đang kết nối...';
+
+            updateStatus('🔄 Đang kết nối tới server...', 'info');
+            updateDebug('Connecting to ws://localhost:3000/chat');
 
             // Kết nối WebSocket
-            socket = io('http://localhost:3000/chat');
+            socket = io('http://localhost:3000/chat', {
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5
+            });
 
+            // Connection events
             socket.on('connect', () => {
-                updateStatus('✅ Đã kết nối WebSocket');
+                isConnected = true;
+                updateStatus('✅ WebSocket đã kết nối - Socket ID: ' + socket.id, 'connected');
+                updateDebug(`Connected! Socket ID: ${socket.id}<br>Sending startChat event...`);
                 
                 // Gửi yêu cầu bắt đầu chat
                 socket.emit('startChat', {
@@ -84,20 +295,42 @@
                 });
             });
 
+            socket.on('connect_error', (error) => {
+                updateStatus('❌ Lỗi kết nối: ' + error.message, 'error');
+                updateDebug(`Connection Error: ${error.message}<br>Make sure server is running at http://localhost:3000`);
+                startBtn.disabled = false;
+                startBtn.textContent = 'Bắt đầu Chat';
+            });
+
+            socket.on('disconnect', (reason) => {
+                isConnected = false;
+                updateStatus('❌ Mất kết nối: ' + reason, 'error');
+                updateDebug(`Disconnected: ${reason}`);
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('sendBtn').disabled = true;
+            });
+
             socket.on('chatStarted', (data) => {
                 sessionId = data.sessionId;
                 customerId = data.customer.id;
-                updateStatus(`✅ Chat đã bắt đầu - Session: ${sessionId.substring(0, 8)}...`);
                 
+                updateStatus(`✅ Chat đã bắt đầu - Session: ${sessionId.substring(0, 8)}...`, 'connected');
+                updateDebug(`Chat Started!<br>Session ID: ${sessionId}<br>Customer ID: ${customerId}<br>Is New: ${data.isNewCustomer}`);
+                
+                clearMessages();
                 addSystemMessage(data.message);
                 
                 // Enable input
                 document.getElementById('messageInput').disabled = false;
                 document.getElementById('sendBtn').disabled = false;
+                document.getElementById('messageInput').focus();
+                
+                startBtn.textContent = '✅ Đã kết nối';
             });
 
             socket.on('newMessage', (data) => {
-                addMessage(data.senderName, data.content, data.senderType);
+                updateDebug(`New message received from ${data.senderType}: ${data.content.substring(0, 30)}...`);
+                addMessage(data.senderName, data.content, data.senderType, data.sentAt);
             });
 
             socket.on('agentJoined', (data) => {
@@ -105,20 +338,24 @@
             });
 
             socket.on('userTyping', (data) => {
-                if (data.isTyping) {
-                    document.getElementById('typing').textContent = `${data.userName} đang nhập...`;
+                if (data.isTyping && data.userName !== customerName) {
+                    document.getElementById('typing').textContent = `✍️ ${data.userName} đang nhập...`;
                     document.getElementById('typing').style.display = 'block';
                 } else {
                     document.getElementById('typing').style.display = 'none';
                 }
             });
 
-            socket.on('error', (data) => {
-                alert('Lỗi: ' + data.message);
+            socket.on('chatClosed', (data) => {
+                addSystemMessage(data.message);
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('sendBtn').disabled = true;
             });
 
-            socket.on('disconnect', () => {
-                updateStatus('❌ Mất kết nối');
+            socket.on('error', (data) => {
+                updateStatus('❌ Lỗi: ' + data.message, 'error');
+                updateDebug(`Server Error: ${data.message}`);
+                alert('❌ Lỗi: ' + data.message);
             });
         }
 
@@ -126,7 +363,9 @@
             const input = document.getElementById('messageInput');
             const content = input.value.trim();
 
-            if (!content || !sessionId) return;
+            if (!content || !sessionId || !isConnected) return;
+
+            updateDebug(`Sending message: "${content.substring(0, 30)}..."`);
 
             socket.emit('sendMessage', {
                 sessionId: sessionId,
@@ -139,14 +378,30 @@
             input.value = '';
         }
 
-        function addMessage(sender, content, type) {
+        function addMessage(sender, content, type, sentAt) {
             const messagesDiv = document.getElementById('messages');
+            
+            // Remove empty state if exists
+            const emptyState = messagesDiv.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+            
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
             
+            const time = sentAt ? new Date(sentAt).toLocaleTimeString('vi-VN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            }) : new Date().toLocaleTimeString('vi-VN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
             messageDiv.innerHTML = `
                 <div class="sender-name">${sender}</div>
-                <div class="message-bubble">${content}</div>
+                <div class="message-bubble">
+                    ${escapeHtml(content)}
+                    <div class="message-time">${time}</div>
+                </div>
             `;
             
             messagesDiv.appendChild(messageDiv);
@@ -155,23 +410,47 @@
 
         function addSystemMessage(content) {
             const messagesDiv = document.getElementById('messages');
+            
+            const emptyState = messagesDiv.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+            
             const messageDiv = document.createElement('div');
-            messageDiv.style.textAlign = 'center';
-            messageDiv.style.color = '#65676b';
-            messageDiv.style.fontSize = '14px';
-            messageDiv.style.margin = '10px 0';
+            messageDiv.className = 'system-message';
             messageDiv.textContent = content;
             
             messagesDiv.appendChild(messageDiv);
         }
 
-        function updateStatus(text) {
-            document.getElementById('status').textContent = text;
+        function clearMessages() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // Enter to send
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
+            if (e.key === 'Enter' && !document.getElementById('sendBtn').disabled) {
+                sendMessage();
+            }
+        });
+
+        // Check server on load
+        window.addEventListener('load', () => {
+            fetch('http://localhost:3000/api/customers')
+                .then(response => {
+                    if (response.ok) {
+                        updateDebug('✅ Server is running and accessible');
+                    }
+                })
+                .catch(() => {
+                    updateStatus('⚠️ Không thể kết nối tới server. Hãy chắc chắn server đang chạy tại http://localhost:3000', 'error');
+                    updateDebug('❌ Server check failed. Please start backend server with: npm run start:dev');
+                });
         });
     </script>
 </body>
