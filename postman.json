@@ -1,206 +1,322 @@
 {
   "info": {
-    "name": "Unified Customer Platform - CRM API",
-    "description": "Collection for testing CRM module APIs",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "name": "Unified Customer Platform - Complete API",
+    "description": "Complete API collection for CRM and Live Chat modules\n\n**Setup:**\n1. Set variable `base_url` = http://localhost:3000\n2. After creating a customer, copy `id` to variable `customer_id`\n3. After starting a chat, copy `sessionId` to variable `session_id`\n\n**Test Order:**\n1. CRM APIs (1-6)\n2. Start chat with HTML client\n3. Copy session ID\n4. Chat REST APIs (11-15)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "unified-customer-platform",
+    "version": "1.0.0"
   },
   "item": [
     {
-      "name": "1. Create Customer",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"John Doe\",\n  \"phone\": \"0123456789\",\n  \"company\": \"ABC Corporation\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/api/customers",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers"]
-        },
-        "description": "Tạo khách hàng mới trong hệ thống"
-      },
-      "response": []
-    },
-    {
-      "name": "2. Get All Customers (Paginated)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/api/customers?page=1&limit=10",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers"],
-          "query": [
-            {
-              "key": "page",
-              "value": "1",
-              "description": "Page number"
+      "name": "📋 CRM - Customer Management",
+      "item": [
+        {
+          "name": "1. Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"John Doe\",\n  \"phone\": \"0123456789\",\n  \"company\": \"ABC Corporation\"\n}"
             },
-            {
-              "key": "limit",
-              "value": "10",
-              "description": "Items per page"
-            }
-          ]
-        },
-        "description": "Lấy danh sách khách hàng với phân trang"
-      },
-      "response": []
-    },
-    {
-      "name": "3. Find Customer by Email",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/api/customers/email/john.doe@example.com",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers", "email", "john.doe@example.com"]
-        },
-        "description": "Tìm khách hàng theo email (dùng cho Live Chat lookup)"
-      },
-      "response": []
-    },
-    {
-      "name": "4. Get Customer by ID",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/api/customers/{{customer_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers", "{{customer_id}}"]
-        },
-        "description": "Lấy thông tin chi tiết khách hàng theo ID"
-      },
-      "response": []
-    },
-    {
-      "name": "5. Update Customer",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            },
+            "description": "Tạo khách hàng mới trong hệ thống CRM"
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"0987654321\",\n  \"company\": \"XYZ Corporation\"\n}"
         },
-        "url": {
-          "raw": "{{base_url}}/api/customers/{{customer_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers", "{{customer_id}}"]
-        },
-        "description": "Cập nhật thông tin khách hàng"
-      },
-      "response": []
-    },
-    {
-      "name": "6. Delete Customer",
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/api/customers/{{customer_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers", "{{customer_id}}"]
-        },
-        "description": "Xóa khách hàng (chỉ khi không có chat/ticket liên quan)"
-      },
-      "response": []
-    },
-    {
-      "name": "7. Create Customer - Duplicate Email (Error)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+        {
+          "name": "2. Get All Customers (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                }
+              ]
+            },
+            "description": "Lấy danh sách khách hàng có phân trang"
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"Another John\"\n}"
         },
-        "url": {
-          "raw": "{{base_url}}/api/customers",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers"]
-        },
-        "description": "Test validation: Tạo customer với email trùng lặp"
-      },
-      "response": []
-    },
-    {
-      "name": "8. Create Customer - Invalid Email (Error)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+        {
+          "name": "3. Find Customer by Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/email/john.doe@example.com",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "email", "john.doe@example.com"]
+            },
+            "description": "Tìm khách hàng theo email (dùng cho Live Chat lookup)"
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"invalid-email\",\n  \"name\": \"Test User\"\n}"
         },
-        "url": {
-          "raw": "{{base_url}}/api/customers",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers"]
-        },
-        "description": "Test validation: Email không hợp lệ"
-      },
-      "response": []
-    },
-    {
-      "name": "9. Create Customer - Missing Required Fields (Error)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+        {
+          "name": "4. Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/{{customer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "{{customer_id}}"]
+            },
+            "description": "Lấy thông tin chi tiết khách hàng theo ID"
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"phone\": \"0123456789\"\n}"
         },
-        "url": {
-          "raw": "{{base_url}}/api/customers",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers"]
+        {
+          "name": "5. Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"0987654321\",\n  \"company\": \"XYZ Corporation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers/{{customer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "{{customer_id}}"]
+            },
+            "description": "Cập nhật thông tin khách hàng"
+          }
         },
-        "description": "Test validation: Thiếu email và name"
-      },
-      "response": []
+        {
+          "name": "6. Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/{{customer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "{{customer_id}}"]
+            },
+            "description": "Xóa khách hàng (chỉ khi không có chat/ticket liên quan)"
+          }
+        }
+      ],
+      "description": "APIs quản lý khách hàng (CRUD operations)"
     },
     {
-      "name": "10. Get Customer - Not Found (Error)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/api/customers/00000000-0000-0000-0000-000000000000",
-          "host": ["{{base_url}}"],
-          "path": ["api", "customers", "00000000-0000-0000-0000-000000000000"]
+      "name": "❌ CRM - Error Cases",
+      "item": [
+        {
+          "name": "7. Create - Duplicate Email (Error 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"Another John\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            },
+            "description": "Test validation: Email đã tồn tại"
+          }
         },
-        "description": "Test error: Customer không tồn tại"
-      },
-      "response": []
+        {
+          "name": "8. Create - Invalid Email (Error 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invalid-email\",\n  \"name\": \"Test User\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            },
+            "description": "Test validation: Email format không hợp lệ"
+          }
+        },
+        {
+          "name": "9. Create - Missing Required Fields (Error 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            },
+            "description": "Test validation: Thiếu email và name (required)"
+          }
+        },
+        {
+          "name": "10. Get - Customer Not Found (Error 404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/00000000-0000-0000-0000-000000000000",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "customers",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "description": "Test error: Customer không tồn tại"
+          }
+        }
+      ],
+      "description": "Test cases cho validation và error handling"
+    },
+    {
+      "name": "💬 Live Chat - Session Management",
+      "item": [
+        {
+          "name": "11. Get Active Chat Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/chat/sessions/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "sessions", "active"]
+            },
+            "description": "Lấy danh sách tất cả chat sessions đang active (chưa đóng)"
+          }
+        },
+        {
+          "name": "12. Get Chat Session Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/chat/sessions/{{session_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "sessions", "{{session_id}}"]
+            },
+            "description": "Lấy thông tin chi tiết của một chat session (bao gồm thông tin customer)"
+          }
+        },
+        {
+          "name": "13. Get Chat History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/chat/sessions/{{session_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "sessions", "{{session_id}}", "messages"]
+            },
+            "description": "Lấy toàn bộ lịch sử chat của một session (tất cả messages)"
+          }
+        },
+        {
+          "name": "14. Assign Agent to Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agentId\": \"agent-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat/sessions/{{session_id}}/assign",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "sessions", "{{session_id}}", "assign"]
+            },
+            "description": "Gán agent vào một chat session (thường được gọi tự động khi agent join)"
+          }
+        },
+        {
+          "name": "15. Close Chat Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat/sessions/{{session_id}}/close",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "sessions", "{{session_id}}", "close"]
+            },
+            "description": "Đóng một chat session (status: active → closed)"
+          }
+        }
+      ],
+      "description": "REST APIs quản lý chat sessions\n\n**Note:** WebSocket events không test được qua Postman. Dùng `chat-test.html` và `agent-test.html` để test real-time features."
+    },
+    {
+      "name": "📖 Documentation & Info",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            },
+            "description": "Simple health check - kiểm tra server có đang chạy không"
+          }
+        }
+      ],
+      "description": "Utility endpoints"
     }
   ],
   "variable": [
@@ -212,7 +328,14 @@
     {
       "key": "customer_id",
       "value": "",
-      "type": "string"
+      "type": "string",
+      "description": "ID của customer (copy từ response sau khi tạo customer)"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string",
+      "description": "ID của chat session (copy từ HTML test client hoặc GET active sessions)"
     }
   ]
 }

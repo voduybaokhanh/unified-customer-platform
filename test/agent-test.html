@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Chat Client</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #1a1d21;
+        padding: 20px;
+        color: white;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #242831;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+      .header {
+        background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+        color: white;
+        padding: 30px;
+      }
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+      .header p {
+        opacity: 0.9;
+        font-size: 14px;
+      }
+
+      .agent-form {
+        padding: 25px;
+        border-bottom: 2px solid #2d323a;
+        background: #1e2229;
+      }
+      .form-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .agent-form input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #3a3f4a;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #2d323a;
+        color: white;
+        transition: border 0.3s;
+      }
+      .agent-form input:focus {
+        outline: none;
+        border-color: #3f5efb;
+      }
+      .agent-form button {
+        width: 100%;
+        padding: 12px 32px;
+        background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: transform 0.2s;
+      }
+      .agent-form button:hover {
+        transform: translateY(-2px);
+      }
+      .agent-form button:disabled {
+        background: #555;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .status {
+        padding: 15px 25px;
+        background: #ffc107;
+        color: #000;
+        font-size: 14px;
+        font-weight: 500;
+        border-left: 4px solid #ff9800;
+      }
+      .status.connected {
+        background: #4caf50;
+        color: white;
+        border-left-color: #2e7d32;
+      }
+      .status.error {
+        background: #f44336;
+        color: white;
+        border-left-color: #c62828;
+      }
+
+      .session-info {
+        padding: 15px 25px;
+        background: #2d323a;
+        font-size: 13px;
+        border-bottom: 1px solid #3a3f4a;
+      }
+      .session-info strong {
+        color: #3f5efb;
+      }
+
+      .messages {
+        height: 450px;
+        overflow-y: auto;
+        padding: 25px;
+        background: #1e2229;
+      }
+      .messages::-webkit-scrollbar {
+        width: 8px;
+      }
+      .messages::-webkit-scrollbar-track {
+        background: #2d323a;
+      }
+      .messages::-webkit-scrollbar-thumb {
+        background: #3a3f4a;
+        border-radius: 4px;
+      }
+
+      .message {
+        margin-bottom: 20px;
+        animation: slideIn 0.3s ease;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .message.customer {
+        text-align: left;
+      }
+      .message.agent {
+        text-align: right;
+      }
+      .message-bubble {
+        display: inline-block;
+        padding: 12px 18px;
+        border-radius: 18px;
+        max-width: 70%;
+        word-wrap: break-word;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+      .message.customer .message-bubble {
+        background: #3a3f4a;
+        color: white;
+      }
+      .message.agent .message-bubble {
+        background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+        color: white;
+      }
+      .sender-name {
+        font-size: 11px;
+        color: #999;
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .message-time {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-top: 4px;
+      }
+      .system-message {
+        text-align: center;
+        color: #999;
+        font-size: 13px;
+        margin: 15px 0;
+        padding: 8px;
+        background: #2d323a;
+        border-radius: 8px;
+      }
+
+      .input-area {
+        padding: 20px 25px;
+        border-top: 2px solid #2d323a;
+        display: flex;
+        gap: 12px;
+        background: #1e2229;
+      }
+      .input-area input {
+        flex: 1;
+        padding: 14px 20px;
+        border: 2px solid #3a3f4a;
+        border-radius: 24px;
+        font-size: 14px;
+        background: #2d323a;
+        color: white;
+      }
+      .input-area input:focus {
+        outline: none;
+        border-color: #3f5efb;
+      }
+      .input-area button {
+        padding: 14px 28px;
+        background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+        color: white;
+        border: none;
+        border-radius: 24px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .input-area button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>👨‍💼 Agent Dashboard</h1>
+        <p>Join existing chat sessions to support customers</p>
+      </div>
+
+      <div class="agent-form">
+        <div class="form-row">
+          <input
+            type="text"
+            id="agentId"
+            placeholder="🆔 Agent ID"
+            value="agent-001"
+          />
+          <input
+            type="text"
+            id="agentName"
+            placeholder="👤 Agent Name"
+            value="Support Agent"
+          />
+        </div>
+        <div class="form-row">
+          <input
+            type="text"
+            id="sessionId"
+            placeholder="🔑 Session ID (copy từ customer chat)"
+          />
+        </div>
+        <button onclick="joinSession()" id="joinBtn">Join Session</button>
+      </div>
+
+      <div class="status" id="status">
+        ⏳ Chưa kết nối - Nhập Session ID và nhấn "Join Session"
+      </div>
+
+      <div class="session-info" id="sessionInfo" style="display: none">
+        <strong>Session Info:</strong> <span id="sessionDetails"></span>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="empty-state">
+          <p>📋 Nhập Session ID của customer để tham gia chat</p>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="💬 Nhập tin nhắn..."
+          disabled
+        />
+        <button onclick="sendMessage()" id="sendBtn" disabled>Gửi</button>
+      </div>
+    </div>
+
+    <script>
+      let socket;
+      let sessionId;
+      let agentId;
+      let agentName;
+
+      function updateStatus(text, type = "info") {
+        const statusEl = document.getElementById("status");
+        statusEl.textContent = text;
+        statusEl.className = "status " + type;
+      }
+
+      function joinSession() {
+        const sessionIdInput = document
+          .getElementById("sessionId")
+          .value.trim();
+        const agentIdInput = document.getElementById("agentId").value.trim();
+        const agentNameInput = document
+          .getElementById("agentName")
+          .value.trim();
+        const joinBtn = document.getElementById("joinBtn");
+
+        if (!sessionIdInput) {
+          alert("⚠️ Vui lòng nhập Session ID");
+          return;
+        }
+
+        if (!agentIdInput || !agentNameInput) {
+          alert("⚠️ Vui lòng nhập đầy đủ Agent ID và Name");
+          return;
+        }
+
+        sessionId = sessionIdInput;
+        agentId = agentIdInput;
+        agentName = agentNameInput;
+
+        joinBtn.disabled = true;
+        joinBtn.textContent = "Đang kết nối...";
+
+        updateStatus("🔄 Đang kết nối tới server...", "info");
+
+        // Kết nối WebSocket
+        socket = io("http://localhost:3000/chat", {
+          transports: ["websocket", "polling"],
+          reconnection: true,
+        });
+
+        socket.on("connect", () => {
+          updateStatus(
+            "✅ WebSocket đã kết nối - Đang join session...",
+            "connected"
+          );
+
+          // Join session
+          socket.emit(
+            "joinSession",
+            {
+              sessionId: sessionId,
+              agentId: agentId,
+              agentName: agentName,
+            },
+            (response) => {
+              if (response.success) {
+                updateStatus(
+                  `✅ Đã tham gia session: ${sessionId.substring(0, 8)}...`,
+                  "connected"
+                );
+
+                // Show session info
+                document.getElementById("sessionInfo").style.display = "block";
+                document.getElementById(
+                  "sessionDetails"
+                ).textContent = `Agent: ${agentName} | Session: ${sessionId.substring(
+                  0,
+                  12
+                )}...`;
+
+                // Load chat history
+                clearMessages();
+                if (response.history && response.history.length > 0) {
+                  response.history.forEach((msg) => {
+                    addMessage(
+                      msg.senderType === "customer"
+                        ? "Customer"
+                        : msg.senderName || "Agent",
+                      msg.content,
+                      msg.senderType,
+                      msg.sentAt
+                    );
+                  });
+                } else {
+                  addSystemMessage("Chưa có tin nhắn nào");
+                }
+
+                // Enable input
+                document.getElementById("messageInput").disabled = false;
+                document.getElementById("sendBtn").disabled = false;
+                document.getElementById("messageInput").focus();
+
+                joinBtn.textContent = "✅ Đã tham gia";
+              } else {
+                updateStatus("❌ Lỗi: " + response.error, "error");
+                alert("❌ Không thể join session: " + response.error);
+                joinBtn.disabled = false;
+                joinBtn.textContent = "Join Session";
+              }
+            }
+          );
+        });
+
+        socket.on("connect_error", (error) => {
+          updateStatus("❌ Lỗi kết nối: " + error.message, "error");
+          joinBtn.disabled = false;
+          joinBtn.textContent = "Join Session";
+        });
+
+        socket.on("newMessage", (data) => {
+          addMessage(
+            data.senderName,
+            data.content,
+            data.senderType,
+            data.sentAt
+          );
+        });
+
+        socket.on("agentJoined", (data) => {
+          if (data.agentName !== agentName) {
+            addSystemMessage(data.message);
+          }
+        });
+
+        socket.on("chatClosed", (data) => {
+          addSystemMessage(data.message);
+          document.getElementById("messageInput").disabled = true;
+          document.getElementById("sendBtn").disabled = true;
+        });
+
+        socket.on("error", (data) => {
+          alert("❌ Lỗi: " + data.message);
+        });
+      }
+
+      function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const content = input.value.trim();
+
+        if (!content || !sessionId) return;
+
+        socket.emit("sendMessage", {
+          sessionId: sessionId,
+          content: content,
+          senderType: "agent",
+          senderId: agentId,
+          senderName: agentName,
+        });
+
+        input.value = "";
+      }
+
+      function addMessage(sender, content, type, sentAt) {
+        const messagesDiv = document.getElementById("messages");
+
+        const emptyState = messagesDiv.querySelector(".empty-state");
+        if (emptyState) emptyState.remove();
+
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${type}`;
+
+        const time = sentAt
+          ? new Date(sentAt).toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : new Date().toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+        messageDiv.innerHTML = `
+                <div class="sender-name">${sender}</div>
+                <div class="message-bubble">
+                    ${escapeHtml(content)}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      function addSystemMessage(content) {
+        const messagesDiv = document.getElementById("messages");
+
+        const emptyState = messagesDiv.querySelector(".empty-state");
+        if (emptyState) emptyState.remove();
+
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "system-message";
+        messageDiv.textContent = content;
+
+        messagesDiv.appendChild(messageDiv);
+      }
+
+      function clearMessages() {
+        document.getElementById("messages").innerHTML = "";
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      document
+        .getElementById("messageInput")
+        .addEventListener("keypress", (e) => {
+          if (
+            e.key === "Enter" &&
+            !document.getElementById("sendBtn").disabled
+          ) {
+            sendMessage();
+          }
+        });
+    </script>
+  </body>
+</html>

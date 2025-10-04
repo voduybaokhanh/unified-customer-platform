@@ -6,7 +6,7 @@ services:
     container_name: ucp_postgres
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_PASSWORD: 90852
       POSTGRES_DB: customer_platform
     ports:
       - "5432:5432"
