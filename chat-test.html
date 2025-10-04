@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat Test Client</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: #0084ff; color: white; padding: 20px; border-radius: 10px 10px 0 0; }
+        .chat-form { padding: 20px; border-bottom: 1px solid #eee; }
+        .chat-form input { width: 200px; padding: 10px; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .chat-form button { padding: 10px 20px; background: #0084ff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .chat-form button:hover { background: #0073e6; }
+        .messages { height: 400px; overflow-y: auto; padding: 20px; }
+        .message { margin-bottom: 15px; }
+        .message.customer { text-align: right; }
+        .message.agent { text-align: left; }
+        .message-bubble { display: inline-block; padding: 10px 15px; border-radius: 18px; max-width: 70%; }
+        .message.customer .message-bubble { background: #0084ff; color: white; }
+        .message.agent .message-bubble { background: #e4e6eb; color: black; }
+        .sender-name { font-size: 12px; color: #65676b; margin-bottom: 5px; }
+        .input-area { padding: 20px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; }
+        .input-area button { padding: 10px 20px; background: #0084ff; color: white; border: none; border-radius: 20px; cursor: pointer; }
+        .status { padding: 10px 20px; background: #f0f2f5; font-size: 14px; color: #65676b; }
+        .typing { font-style: italic; color: #0084ff; font-size: 14px; padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Live Chat Test Client</h1>
+            <p>Test WebSocket connection</p>
+        </div>
+
+        <div class="chat-form">
+            <input type="email" id="email" placeholder="Email của bạn" value="test@example.com">
+            <input type="text" id="name" placeholder="Tên của bạn" value="Test User">
+            <button onclick="startChat()">Bắt đầu Chat</button>
+        </div>
+
+        <div class="status" id="status">Chưa kết nối</div>
+        
+        <div class="typing" id="typing" style="display: none;"></div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Nhập tin nhắn..." disabled>
+            <button onclick="sendMessage()" id="sendBtn" disabled>Gửi</button>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let sessionId;
+        let customerId;
+        let customerName;
+
+        function startChat() {
+            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value;
+
+            if (!email || !name) {
+                alert('Vui lòng nhập email và tên');
+                return;
+            }
+
+            customerName = name;
+
+            // Kết nối WebSocket
+            socket = io('http://localhost:3000/chat');
+
+            socket.on('connect', () => {
+                updateStatus('✅ Đã kết nối WebSocket');
+                
+                // Gửi yêu cầu bắt đầu chat
+                socket.emit('startChat', {
+                    customerEmail: email,
+                    customerName: name
+                });
+            });
+
+            socket.on('chatStarted', (data) => {
+                sessionId = data.sessionId;
+                customerId = data.customer.id;
+                updateStatus(`✅ Chat đã bắt đầu - Session: ${sessionId.substring(0, 8)}...`);
+                
+                addSystemMessage(data.message);
+                
+                // Enable input
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('sendBtn').disabled = false;
+            });
+
+            socket.on('newMessage', (data) => {
+                addMessage(data.senderName, data.content, data.senderType);
+            });
+
+            socket.on('agentJoined', (data) => {
+                addSystemMessage(data.message);
+            });
+
+            socket.on('userTyping', (data) => {
+                if (data.isTyping) {
+                    document.getElementById('typing').textContent = `${data.userName} đang nhập...`;
+                    document.getElementById('typing').style.display = 'block';
+                } else {
+                    document.getElementById('typing').style.display = 'none';
+                }
+            });
+
+            socket.on('error', (data) => {
+                alert('Lỗi: ' + data.message);
+            });
+
+            socket.on('disconnect', () => {
+                updateStatus('❌ Mất kết nối');
+            });
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+
+            if (!content || !sessionId) return;
+
+            socket.emit('sendMessage', {
+                sessionId: sessionId,
+                content: content,
+                senderType: 'customer',
+                senderId: customerId,
+                senderName: customerName
+            });
+
+            input.value = '';
+        }
+
+        function addMessage(sender, content, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            messageDiv.innerHTML = `
+                <div class="sender-name">${sender}</div>
+                <div class="message-bubble">${content}</div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addSystemMessage(content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.style.textAlign = 'center';
+            messageDiv.style.color = '#65676b';
+            messageDiv.style.fontSize = '14px';
+            messageDiv.style.margin = '10px 0';
+            messageDiv.textContent = content;
+            
+            messagesDiv.appendChild(messageDiv);
+        }
+
+        function updateStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        // Enter to send
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
