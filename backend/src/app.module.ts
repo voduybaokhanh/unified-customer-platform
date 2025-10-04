@@ -1,12 +1,16 @@
+// backend/src/app.module.ts
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { CrmModule } from './modules/crm/crm.module';
+import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
+import { CrmModule } from './modules/crm/crm.module';
 
 @Module({
-  imports: [CrmModule, PrismaModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // Make ConfigModule global
+    }),
+    PrismaModule,
+    CrmModule,
+  ],
 })
 export class AppModule {}
