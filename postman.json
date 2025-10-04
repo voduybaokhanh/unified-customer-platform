@@ -1,0 +1,218 @@
+{
+  "info": {
+    "name": "Unified Customer Platform - CRM API",
+    "description": "Collection for testing CRM module APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Create Customer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"John Doe\",\n  \"phone\": \"0123456789\",\n  \"company\": \"ABC Corporation\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/customers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers"]
+        },
+        "description": "Tạo khách hàng mới trong hệ thống"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Get All Customers (Paginated)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/customers?page=1&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number"
+            },
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Items per page"
+            }
+          ]
+        },
+        "description": "Lấy danh sách khách hàng với phân trang"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Find Customer by Email",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/customers/email/john.doe@example.com",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers", "email", "john.doe@example.com"]
+        },
+        "description": "Tìm khách hàng theo email (dùng cho Live Chat lookup)"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Get Customer by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/customers/{{customer_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers", "{{customer_id}}"]
+        },
+        "description": "Lấy thông tin chi tiết khách hàng theo ID"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Update Customer",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"0987654321\",\n  \"company\": \"XYZ Corporation\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/customers/{{customer_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers", "{{customer_id}}"]
+        },
+        "description": "Cập nhật thông tin khách hàng"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Delete Customer",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/customers/{{customer_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers", "{{customer_id}}"]
+        },
+        "description": "Xóa khách hàng (chỉ khi không có chat/ticket liên quan)"
+      },
+      "response": []
+    },
+    {
+      "name": "7. Create Customer - Duplicate Email (Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"Another John\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/customers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers"]
+        },
+        "description": "Test validation: Tạo customer với email trùng lặp"
+      },
+      "response": []
+    },
+    {
+      "name": "8. Create Customer - Invalid Email (Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"invalid-email\",\n  \"name\": \"Test User\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/customers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers"]
+        },
+        "description": "Test validation: Email không hợp lệ"
+      },
+      "response": []
+    },
+    {
+      "name": "9. Create Customer - Missing Required Fields (Error)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"0123456789\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/customers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers"]
+        },
+        "description": "Test validation: Thiếu email và name"
+      },
+      "response": []
+    },
+    {
+      "name": "10. Get Customer - Not Found (Error)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/customers/00000000-0000-0000-0000-000000000000",
+          "host": ["{{base_url}}"],
+          "path": ["api", "customers", "00000000-0000-0000-0000-000000000000"]
+        },
+        "description": "Test error: Customer không tồn tại"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "customer_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
