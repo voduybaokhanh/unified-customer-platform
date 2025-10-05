@@ -4,6 +4,7 @@ import { TicketsController } from './tickets.controller';
 
 @Module({
   providers: [TicketsService],
-  controllers: [TicketsController]
+  controllers: [TicketsController],
+  exports: [TicketsService]
 })
 export class TicketsModule {}
