@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { customerApi, timelineApi, ticketApi } from '../lib/api';
+import { useRealtimeNotifications } from '../hooks/useRealtime';
 
 interface Customer {
   id: string;
@@ -34,7 +35,9 @@ export default function Customer360View() {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { notifications } = useRealtimeNotifications('dashboard-viewer');
 
+  // === FETCH INITIAL DATA ===
   useEffect(() => {
     if (!customerId) return;
 
@@ -61,6 +64,16 @@ export default function Customer360View() {
     fetchData();
   }, [customerId]);
 
+  // === REALTIME UPDATE (Notifications) ===
+  useEffect(() => {
+    if (notifications.length > 0 && customerId) {
+      timelineApi.getCustomerTimeline(customerId).then((res) => {
+        setTimeline(res.data.data);
+      });
+    }
+  }, [notifications, customerId]);
+
+  // === RENDER ===
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -86,9 +99,7 @@ export default function Customer360View() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{customer.name}</h1>
               <p className="text-gray-600 mt-1">{customer.email}</p>
-              {customer.phone && (
-                <p className="text-gray-600">{customer.phone}</p>
-              )}
+              {customer.phone && <p className="text-gray-600">{customer.phone}</p>}
               {customer.company && (
                 <p className="text-gray-500 text-sm mt-2">{customer.company}</p>
               )}
@@ -107,30 +118,18 @@ export default function Customer360View() {
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600">Total Chats</div>
-              <div className="text-3xl font-bold text-blue-600 mt-2">
-                {stats.totalChats}
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600">Total Tickets</div>
-              <div className="text-3xl font-bold text-purple-600 mt-2">
-                {stats.totalTickets}
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600">Open Tickets</div>
-              <div className="text-3xl font-bold text-orange-600 mt-2">
-                {stats.ticketsByStatus.open || 0}
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600">Resolved</div>
-              <div className="text-3xl font-bold text-green-600 mt-2">
-                {stats.ticketsByStatus.resolved || 0}
-              </div>
-            </div>
+            <StatCard label="Total Chats" value={stats.totalChats} color="text-blue-600" />
+            <StatCard label="Total Tickets" value={stats.totalTickets} color="text-purple-600" />
+            <StatCard
+              label="Open Tickets"
+              value={stats.ticketsByStatus.open || 0}
+              color="text-orange-600"
+            />
+            <StatCard
+              label="Resolved"
+              value={stats.ticketsByStatus.resolved || 0}
+              color="text-green-600"
+            />
           </div>
         )}
 
@@ -139,9 +138,11 @@ export default function Customer360View() {
           <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold mb-4">Activity Timeline</h2>
             <div className="space-y-4">
-              {timeline.map((event) => (
-                <TimelineItem key={event.id} event={event} />
-              ))}
+              {timeline.length > 0 ? (
+                timeline.map((event) => <TimelineItem key={event.id} event={event} />)
+              ) : (
+                <p className="text-gray-500">No recent activity</p>
+              )}
             </div>
           </div>
 
@@ -149,9 +150,13 @@ export default function Customer360View() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold mb-4">Recent Tickets</h2>
             <div className="space-y-3">
-              {tickets.slice(0, 5).map((ticket) => (
-                <TicketItem key={ticket.id} ticket={ticket} />
-              ))}
+              {tickets.length > 0 ? (
+                tickets.slice(0, 5).map((ticket) => (
+                  <TicketItem key={ticket.id} ticket={ticket} />
+                ))
+              ) : (
+                <p className="text-gray-500">No tickets yet</p>
+              )}
             </div>
           </div>
         </div>
@@ -160,26 +165,40 @@ export default function Customer360View() {
   );
 }
 
+// === COMPONENTS ===
+function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="text-sm text-gray-600">{label}</div>
+      <div className={`text-3xl font-bold mt-2 ${color}`}>{value}</div>
+    </div>
+  );
+}
+
 function TimelineItem({ event }: { event: TimelineEvent }) {
   const getIcon = (type: string) => {
     switch (type) {
-      case 'chat': return '💬';
-      case 'ticket_created': return '🎫';
-      case 'ticket_updated': return '📝';
-      case 'ticket_closed': return '✅';
-      default: return '📌';
+      case 'chat':
+        return '💬';
+      case 'ticket_created':
+        return '🎫';
+      case 'ticket_updated':
+        return '📝';
+      case 'ticket_closed':
+        return '✅';
+      default:
+        return '📌';
     }
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleString('vi-VN', {
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
 
   return (
     <div className="flex items-start gap-3 pb-4 border-b last:border-0">
@@ -207,7 +226,7 @@ function TicketItem({ ticket }: { ticket: any }) {
           <p className="font-medium text-sm">{ticket.ticketNumber}</p>
           <p className="text-sm text-gray-600 mt-1">{ticket.subject}</p>
         </div>
-        <span className={`text-xs px-2 py-1 rounded ${statusColors[ticket.status]}`}>
+        <span className={`text-xs px-2 py-1 rounded ${statusColors[ticket.status] || ''}`}>
           {ticket.status}
         </span>
       </div>
