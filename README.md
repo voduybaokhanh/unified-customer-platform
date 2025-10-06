@@ -9,7 +9,6 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 ## 🏗️ Tech Stack
 
 ### Backend
-
 - **NestJS** (Node.js framework)
 - **TypeScript**
 - **PostgreSQL** (Database)
@@ -18,8 +17,7 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 - **Socket.io** (WebSocket real-time)
 
 ### Frontend
-
-- **React** + **TypeScript**
+- **React + TypeScript**
 - **Vite** (Build tool)
 - **Tailwind CSS**
 - **Socket.io-client**
@@ -30,7 +28,6 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 ## 🚀 Setup & Installation
 
 ### Prerequisites
-
 - Node.js >= 18
 - Docker & Docker Compose
 - npm hoặc yarn
@@ -38,7 +35,7 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 ### 1. Clone Repository
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/voduybaokhanh/unified-customer-platform.git
 cd unified-customer-platform
 ```
 
@@ -72,7 +69,7 @@ npx prisma generate
 npm run start:dev
 ```
 
-Server chạy tại: `http://localhost:3000`
+**Server chạy tại:** http://localhost:3000
 
 ### 4. Setup Frontend (Coming soon)
 
@@ -87,61 +84,57 @@ npm run dev
 ## 📊 Development Progress
 
 ### ✅ Phase 1: Foundation & Setup (COMPLETED)
-
-- [x] Docker setup (PostgreSQL + Redis)
-- [x] NestJS project structure
-- [x] Prisma schema & migrations
-- [x] Global validation & error handling
+- ✅ Docker setup (PostgreSQL + Redis)
+- ✅ NestJS project structure
+- ✅ Prisma schema & migrations
+- ✅ Global validation & error handling
 
 ### ✅ Phase 2: CRM Module (COMPLETED)
-
-- [x] Customer CRUD APIs
-- [x] Email lookup (for Live Chat integration)
-- [x] Pagination support
-- [x] Input validation với class-validator
-- [x] Comprehensive error handling
+- ✅ Customer CRUD APIs
+- ✅ Email lookup (for Live Chat integration)
+- ✅ Pagination support
+- ✅ Input validation với class-validator
+- ✅ Comprehensive error handling
 
 ### ✅ Phase 3: Live Chat Module (COMPLETED)
+- ✅ WebSocket setup with Socket.io
+- ✅ Chat session management
+- ✅ Real-time messaging (customer ↔ agent)
+- ✅ Auto CRM integration (lookup/create customer)
+- ✅ Chat history persistence
+- ✅ Agent assignment to sessions
+- ✅ Typing indicators
+- ✅ Room-based communication
+- ✅ REST APIs for session management
 
-- [x] WebSocket setup with Socket.io
-- [x] Chat session management
-- [x] Real-time messaging (customer ↔ agent)
-- [x] Auto CRM integration (lookup/create customer)
-- [x] Chat history persistence
-- [x] Agent assignment to sessions
-- [x] Typing indicators
-- [x] Room-based communication
-- [x] REST APIs for session management
+### ✅ Phase 4: Help Desk Module (COMPLETED)
+- ✅ Ticket CRUD operations
+- ✅ Convert chat to ticket (1-click)
+- ✅ Ticket assignment & status workflow
+- ✅ Comments & internal notes
+- ✅ Priority management (low, medium, high, urgent)
+- ✅ Ticket number auto-generation (TK-00001, TK-00002...)
 
-### 📋 Phase 4: Help Desk Module (COMPLETED)
-
-- [x] Ticket CRUD operations
-- [x] Convert chat to ticket (1-click)
-- [x] Ticket assignment & status workflow
-- [x] Comments & internal notes
-- [x] Priority management
-
-### 🔗 Phase 5: Integration (PLANNED)
-
-- [ ] Connect all modules seamlessly
-- [ ] Customer activity timeline
-- [ ] Unified notification system
+### ✅ Phase 5: Integration (COMPLETED)
+- ✅ Connect all modules seamlessly
+- ✅ Customer activity timeline
+- ✅ Unified notification system (WebSocket)
+- ✅ Customer statistics & analytics
+- ✅ Recent activity dashboard
 
 ### 🎨 Phase 6: 360° Customer View (PLANNED)
-
-- [ ] Customer detail page with full history
-- [ ] Timeline visualization
-- [ ] Related data aggregation
-- [ ] Analytics dashboard
+- ⬜ Customer detail page with full history
+- ⬜ Timeline visualization
+- ⬜ Related data aggregation
+- ⬜ Analytics dashboard
 
 ### 🚀 Phase 7: Production Ready (PLANNED)
-
-- [ ] Authentication & Authorization (JWT)
-- [ ] Role-based access control
-- [ ] Rate limiting
-- [ ] Logging & Monitoring
-- [ ] Docker production setup
-- [ ] CI/CD pipeline
+- ⬜ Authentication & Authorization (JWT)
+- ⬜ Role-based access control
+- ⬜ Rate limiting
+- ⬜ Logging & Monitoring
+- ⬜ Docker production setup
+- ⬜ CI/CD pipeline
 
 ---
 
@@ -149,138 +142,113 @@ npm run dev
 
 ### 🔹 CRM Module APIs
 
-| Method | Endpoint                      | Description                           |
-| ------ | ----------------------------- | ------------------------------------- |
-| POST   | `/api/customers`              | Tạo khách hàng mới                    |
-| GET    | `/api/customers`              | Lấy danh sách khách hàng (phân trang) |
-| GET    | `/api/customers/:id`          | Lấy chi tiết khách hàng theo ID       |
-| GET    | `/api/customers/email/:email` | Tìm khách hàng theo email             |
-| PUT    | `/api/customers/:id`          | Cập nhật thông tin khách hàng         |
-| DELETE | `/api/customers/:id`          | Xóa khách hàng                        |
-
-#### Example: Create Customer
-
-```bash
-curl -X POST http://localhost:3000/api/customers \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "name": "John Doe",
-    "phone": "0123456789",
-    "company": "ABC Corp"
-  }'
-```
-
-#### Example Response
-
-```json
-{
-  "success": true,
-  "message": "Tạo khách hàng thành công",
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "email": "john@example.com",
-    "name": "John Doe",
-    "phone": "0123456789",
-    "company": "ABC Corp",
-    "createdAt": "2025-10-04T12:00:00.000Z",
-    "updatedAt": "2025-10-04T12:00:00.000Z"
-  }
-}
-```
-
----
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/customers` | Tạo khách hàng mới |
+| GET | `/api/customers` | Lấy danh sách khách hàng (phân trang) |
+| GET | `/api/customers/:id` | Lấy chi tiết khách hàng theo ID |
+| GET | `/api/customers/email/:email` | Tìm khách hàng theo email |
+| PUT | `/api/customers/:id` | Cập nhật thông tin khách hàng |
+| DELETE | `/api/customers/:id` | Xóa khách hàng |
 
 ### 🔹 Live Chat Module APIs
 
-#### REST APIs
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/chat/sessions/active` | Lấy danh sách chat sessions đang active |
+| GET | `/api/chat/sessions/:id` | Lấy thông tin chi tiết session |
+| GET | `/api/chat/sessions/:id/messages` | Lấy lịch sử chat |
+| POST | `/api/chat/sessions/:id/close` | Đóng chat session |
+| POST | `/api/chat/sessions/:id/assign` | Gán agent vào session |
 
-| Method | Endpoint                          | Description                             |
-| ------ | --------------------------------- | --------------------------------------- |
-| GET    | `/api/chat/sessions/active`       | Lấy danh sách chat sessions đang active |
-| GET    | `/api/chat/sessions/:id`          | Lấy thông tin chi tiết session          |
-| GET    | `/api/chat/sessions/:id/messages` | Lấy lịch sử chat                        |
-| POST   | `/api/chat/sessions/:id/close`    | Đóng chat session                       |
-| POST   | `/api/chat/sessions/:id/assign`   | Gán agent vào session                   |
+**WebSocket Endpoint:** `ws://localhost:3000/chat`
 
-#### WebSocket Events
+### 🔹 Tickets Module APIs
 
-**Endpoint:** `ws://localhost:3000/chat`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/tickets` | Tạo ticket mới |
+| POST | `/api/tickets/convert-from-chat/:sessionId` | Convert chat thành ticket |
+| GET | `/api/tickets` | Lấy danh sách tickets (có filter) |
+| GET | `/api/tickets/:id` | Lấy chi tiết ticket |
+| GET | `/api/tickets/number/:ticketNumber` | Tìm ticket theo số (TK-00001) |
+| GET | `/api/tickets/customer/:customerId` | Lấy tất cả tickets của customer |
+| PUT | `/api/tickets/:id` | Cập nhật ticket (status, priority) |
+| POST | `/api/tickets/:id/comments` | Thêm comment vào ticket |
+| GET | `/api/tickets/:id/comments` | Lấy danh sách comments |
+| DELETE | `/api/tickets/:id` | Đóng ticket (soft delete) |
 
-| Event         | Direction       | Description                 | Payload                                                    |
-| ------------- | --------------- | --------------------------- | ---------------------------------------------------------- |
-| `startChat`   | Client → Server | Bắt đầu chat session        | `{ customerEmail, customerName }`                          |
-| `chatStarted` | Server → Client | Xác nhận chat đã bắt đầu    | `{ sessionId, customer, isNewCustomer }`                   |
-| `sendMessage` | Client → Server | Gửi tin nhắn                | `{ sessionId, content, senderType, senderId, senderName }` |
-| `newMessage`  | Server → Client | Nhận tin nhắn mới           | `{ id, sessionId, senderType, content, sentAt }`           |
-| `joinSession` | Client → Server | Agent tham gia session      | `{ sessionId, agentId, agentName }`                        |
-| `agentJoined` | Server → Client | Thông báo agent đã tham gia | `{ agentId, agentName, message }`                          |
-| `closeChat`   | Client → Server | Đóng chat session           | `{ sessionId }`                                            |
-| `chatClosed`  | Server → Client | Thông báo chat đã đóng      | `{ sessionId, message }`                                   |
-| `typing`      | Client → Server | Thông báo đang gõ           | `{ sessionId, isTyping, userName }`                        |
-| `userTyping`  | Server → Client | Hiển thị trạng thái typing  | `{ userName, isTyping }`                                   |
+### 🔹 Integration Module APIs
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/timeline/customer/:customerId` | Lấy timeline 360° của customer |
+| GET | `/api/timeline/customer/:customerId/stats` | Thống kê tổng quan customer |
+| GET | `/api/timeline/recent?limit=20` | Timeline gần đây (dashboard) |
+| GET | `/api/timeline/event/:eventId?type=chat` | Chi tiết một event trong timeline |
+
+**Notification WebSocket:** `ws://localhost:3000/notifications`
 
 ---
 
 ## 🧪 Testing Guide
 
-### 1. Test CRM APIs với Postman
-
-1. Import [File JSON](postman.json)
-2. Đảm bảo server đang chạy: `npm run start:dev`
-3. Test các endpoints theo thứ tự trong collection
+### 1. Test CRM & Tickets APIs với Postman
+- Import collection: `postman-collection.json`
+- Đảm bảo server đang chạy: `npm run start:dev`
+- Test các endpoints theo thứ tự trong collection
 
 ### 2. Test Live Chat Real-time
 
-#### 🎯 Quick Start Guide
-
-**Bước 1: Khởi động server**
-
+#### Bước 1: Khởi động server
 ```bash
 cd backend
 npm run start:dev
 ```
 
-**Bước 2: Test Customer Chat**
-
-1. Mở [File Html](test/chat-test.html) trong browser
+#### Bước 2: Test Customer Chat
+1. Mở file `chat-test.html` trong browser
 2. Nhập email: `customer@example.com`
 3. Nhập tên: `Customer Test`
-4. Click **"Bắt đầu Chat"**
-5. ✅ Đợi status bar hiện: **"Chat đã bắt đầu - Session: xxxxx..."**
-6. 📋 **Copy Session ID** (hiển thị trong status bar)
-7. Gửi tin nhắn: "Xin chào, tôi cần hỗ trợ"
+4. Click "Bắt đầu Chat"
+5. Copy Session ID từ status bar
+6. Gửi tin nhắn: "Xin chào, tôi cần hỗ trợ"
 
-**Bước 3: Test Agent Support**
-
-1. Mở [File Html](test/agent-test.html) trong tab/browser mới
+#### Bước 3: Test Agent Support
+1. Mở file `agent-test.html` trong tab/browser mới
 2. Agent ID: `agent-001` (mặc định)
 3. Agent Name: `Support Agent` (mặc định)
-4. **Paste Session ID** đã copy từ customer chat
-5. Click **"Join Session"**
-6. ✅ Sẽ thấy chat history của customer
-7. Gửi tin nhắn: "Xin chào! Tôi có thể giúp gì?"
-8. 🎉 Tin nhắn xuất hiện real-time ở cả 2 tabs!
+4. Paste Session ID đã copy
+5. Click "Join Session"
+6. Gửi tin nhắn: "Xin chào! Tôi có thể giúp gì?"
+7. Tin nhắn xuất hiện real-time ở cả 2 tabs
 
-#### 🔍 Kiểm tra Database
+### 3. Test Notifications Real-time
 
-```bash
-npx prisma studio
-```
+#### Bước 1: Mở Notification Dashboard
+1. Mở file `notification-test.html` trong browser
+2. Agent ID: `agent-001`
+3. Click "Subscribe to Notifications"
+4. Status hiển thị: "Đã đăng ký thành công"
 
-Truy cập `http://localhost:5555` và kiểm tra:
+#### Bước 2: Trigger Notifications
+- Tạo chat mới (dùng `chat-test.html`) → Agent nhận notification
+- Convert chat → ticket → Agent nhận notification
+- Update ticket status → Liên quan nhận notification
 
-- `customers`: Có customer mới
-- `chat_sessions`: Có session với status "active"
-- `chat_messages`: Có tin nhắn đã gửi
-- `customer_activities`: Có log activity
+### 4. Test Timeline & 360° View
+
+Dùng Postman:
+1. Chạy request "29. Get Customer Timeline"
+2. Xem toàn bộ activities: chat, tickets, status changes
+3. Chạy request "30. Get Customer Stats"
+4. Xem thống kê: tổng chat, tổng tickets, breakdown by status
 
 ---
 
 ## 🗄️ Database Schema
 
 ### Customers
-
 ```sql
 - id: UUID (PK)
 - email: VARCHAR (UNIQUE)
@@ -292,7 +260,6 @@ Truy cập `http://localhost:5555` và kiểm tra:
 ```
 
 ### ChatSessions
-
 ```sql
 - id: UUID (PK)
 - customer_id: UUID (FK → customers)
@@ -303,7 +270,6 @@ Truy cập `http://localhost:5555` và kiểm tra:
 ```
 
 ### ChatMessages
-
 ```sql
 - id: UUID (PK)
 - session_id: UUID (FK → chat_sessions)
@@ -313,19 +279,7 @@ Truy cập `http://localhost:5555` và kiểm tra:
 - sent_at: TIMESTAMP
 ```
 
-### CustomerActivities
-
-```sql
-- id: UUID (PK)
-- customer_id: UUID (FK → customers)
-- activity_type: VARCHAR ('chat', 'ticket_created', etc.)
-- reference_id: UUID
-- description: TEXT
-- created_at: TIMESTAMP
-```
-
-### Tickets (Coming soon)
-
+### Tickets
 ```sql
 - id: UUID (PK)
 - ticket_number: VARCHAR (UNIQUE)
@@ -335,9 +289,29 @@ Truy cập `http://localhost:5555` và kiểm tra:
 - description: TEXT
 - status: VARCHAR ('open', 'in_progress', 'resolved', 'closed')
 - priority: VARCHAR ('low', 'medium', 'high', 'urgent')
-- assigned_to: UUID (nullable)
+- assigned_to: VARCHAR (nullable)
 - created_at: TIMESTAMP
 - resolved_at: TIMESTAMP (nullable)
+```
+
+### TicketComments
+```sql
+- id: UUID (PK)
+- ticket_id: UUID (FK → tickets)
+- user_id: VARCHAR
+- comment: TEXT
+- is_internal: BOOLEAN
+- created_at: TIMESTAMP
+```
+
+### CustomerActivities
+```sql
+- id: UUID (PK)
+- customer_id: UUID (FK → customers)
+- activity_type: VARCHAR ('chat', 'ticket_created', 'ticket_updated', 'ticket_closed')
+- reference_id: UUID
+- description: TEXT
+- created_at: TIMESTAMP
 ```
 
 ---
@@ -351,21 +325,25 @@ unified-customer-platform/
 │   │   ├── modules/
 │   │   │   ├── crm/
 │   │   │   │   ├── dto/
-│   │   │   │   │   ├── create-customer.dto.ts
-│   │   │   │   │   └── update-customer.dto.ts
 │   │   │   │   ├── crm.controller.ts
 │   │   │   │   ├── crm.service.ts
 │   │   │   │   └── crm.module.ts
-│   │   │   └── chat/
-│   │   │       ├── dto/
-│   │   │       │   ├── start-chat.dto.ts
-│   │   │       │   ├── send-message.dto.ts
-│   │   │       │   ├── chat-session.dto.ts
-│   │   │       │   └── chat-message.dto.ts
-│   │   │       ├── chat.gateway.ts
-│   │   │       ├── chat.service.ts
-│   │   │       ├── chat.controller.ts
-│   │   │       └── chat.module.ts
+│   │   │   ├── chat/
+│   │   │   │   ├── dto/
+│   │   │   │   ├── chat.gateway.ts
+│   │   │   │   ├── chat.service.ts
+│   │   │   │   ├── chat.controller.ts
+│   │   │   │   └── chat.module.ts
+│   │   │   ├── tickets/
+│   │   │   │   ├── dto/
+│   │   │   │   ├── tickets.controller.ts
+│   │   │   │   ├── tickets.service.ts
+│   │   │   │   └── tickets.module.ts
+│   │   │   └── timeline/
+│   │   │       ├── timeline.controller.ts
+│   │   │       ├── timeline.service.ts
+│   │   │       ├── notifications.gateway.ts
+│   │   │       └── timeline.module.ts
 │   │   ├── prisma/
 │   │   │   ├── prisma.service.ts
 │   │   │   └── prisma.module.ts
@@ -374,13 +352,13 @@ unified-customer-platform/
 │   ├── prisma/
 │   │   ├── schema.prisma
 │   │   └── migrations/
-│   ├── test/
 │   └── package.json
 ├── frontend/ (Coming soon)
 ├── docker-compose.yml
 ├── chat-test.html (Customer test client)
 ├── agent-test.html (Agent test client)
-├── CRM-LiveChat-API-Collection.postman_collection.json
+├── notification-test.html (Notification dashboard)
+├── postman-collection.json
 └── README.md
 ```
 
@@ -410,9 +388,6 @@ docker-compose down -v
 # Tạo migration mới
 npx prisma migrate dev --name <migration_name>
 
-# Apply migrations
-npx prisma migrate deploy
-
 # Generate Prisma Client
 npx prisma generate
 
@@ -435,8 +410,6 @@ npm run start:prod
 
 # Run tests
 npm run test
-npm run test:e2e
-npm run test:cov
 ```
 
 ---
@@ -446,38 +419,33 @@ npm run test:cov
 ### Lỗi: "Can't reach database server"
 
 ```bash
-# Kiểm tra Docker containers
-docker ps
-
-# Nếu không thấy containers, khởi động lại
-docker-compose up -d
+docker ps                    # Kiểm tra containers
+docker-compose up -d         # Khởi động lại
 ```
 
 ### Lỗi: "Port 5432 already in use"
 
 ```bash
-# Tắt PostgreSQL local hoặc đổi port trong docker-compose.yml
+# Đổi port trong docker-compose.yml
 ports:
   - "5433:5432"
 
-# Update DATABASE_URL trong .env
+# Update .env
 DATABASE_URL="postgresql://admin:admin123@localhost:5433/customer_platform"
 ```
 
-### WebSocket không kết nối được
+### WebSocket không kết nối
 
-- Kiểm tra server đã bật CORS: Xem `main.ts`
-- Mở Console (F12) trong browser để xem lỗi chi tiết
-- Đảm bảo đang dùng đúng port: `http://localhost:3000/chat`
+- Kiểm tra CORS trong `main.ts`
+- Mở Console (F12) để xem lỗi chi tiết
+- Đảm bảo server đang chạy tại http://localhost:3000
 
 ---
 
 ## 📚 Next Steps
 
-1. **Phase 4:** Implement Help Desk Ticket System
-2. **Phase 5:** Connect chat → ticket conversion
-3. **Phase 6:** Build customer 360° view dashboard
-4. **Phase 7:** Add authentication & production deployment
+1. **Phase 6:** Build 360° customer view dashboard với React
+2. **Phase 7:** Add authentication, authorization & production deployment
 
 ---
 
@@ -499,6 +467,6 @@ MIT License
 
 ## 👥 Team
 
-Developed with ❤️ by VoDuyBaoKhanh
+**Developed with ❤️ by VoDuyBaoKhanh**
 
-**Questions?** Open an issue or contact: khanhvo908@gmail.com
+📧 Questions? Open an issue or contact: khanhvo908@gmail.com
