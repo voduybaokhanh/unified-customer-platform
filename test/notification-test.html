@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notification Center - Agent Dashboard</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+      }
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .header p {
+        opacity: 0.9;
+        font-size: 14px;
+      }
+
+      .subscribe-box {
+        background: #1e293b;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #334155;
+      }
+      .form-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .subscribe-box input {
+        flex: 1;
+        padding: 12px 16px;
+        background: #0f172a;
+        border: 2px solid #334155;
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+      }
+      .subscribe-box input:focus {
+        outline: none;
+        border-color: #6366f1;
+      }
+      .subscribe-box button {
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: transform 0.2s;
+      }
+      .subscribe-box button:hover {
+        transform: translateY(-2px);
+      }
+      .subscribe-box button:disabled {
+        background: #475569;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .status {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .status.pending {
+        background: #fef3c7;
+        color: #92400e;
+        border-left: 4px solid #f59e0b;
+      }
+      .status.connected {
+        background: #d1fae5;
+        color: #065f46;
+        border-left: 4px solid #10b981;
+      }
+      .status.error {
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        background: #1e293b;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        text-align: center;
+      }
+      .stat-card .number {
+        font-size: 32px;
+        font-weight: bold;
+        color: #6366f1;
+        margin-bottom: 8px;
+      }
+      .stat-card .label {
+        font-size: 13px;
+        color: #94a3b8;
+      }
+
+      .notifications {
+        background: #1e293b;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #334155;
+        max-height: 600px;
+        overflow-y: auto;
+      }
+      .notifications::-webkit-scrollbar {
+        width: 8px;
+      }
+      .notifications::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      .notifications::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+
+      .notification-item {
+        padding: 20px;
+        border-bottom: 1px solid #334155;
+        display: flex;
+        align-items: start;
+        gap: 15px;
+        transition: background 0.2s;
+        animation: slideIn 0.3s ease;
+      }
+      .notification-item:hover {
+        background: #0f172a;
+      }
+      .notification-item:last-child {
+        border-bottom: none;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .notification-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+      }
+      .notification-icon.chat {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      }
+      .notification-icon.ticket {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      }
+      .notification-icon.system {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+
+      .notification-content {
+        flex: 1;
+      }
+      .notification-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: #f1f5f9;
+      }
+      .notification-message {
+        font-size: 14px;
+        color: #cbd5e1;
+        margin-bottom: 8px;
+        line-height: 1.5;
+      }
+      .notification-time {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .empty-state {
+        padding: 80px 20px;
+        text-align: center;
+        color: #64748b;
+      }
+      .empty-state svg {
+        width: 80px;
+        height: 80px;
+        opacity: 0.3;
+        margin-bottom: 20px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .badge.new {
+        background: #ef4444;
+        color: white;
+      }
+
+      .clear-btn {
+        padding: 10px 20px;
+        background: #334155;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        margin-top: 15px;
+        width: 100%;
+      }
+      .clear-btn:hover {
+        background: #475569;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🔔 Notification Center</h1>
+        <p>Real-time notifications for agents</p>
+      </div>
+
+      <div class="subscribe-box">
+        <div class="form-group">
+          <input
+            type="text"
+            id="agentId"
+            placeholder="🆔 Agent ID (e.g., agent-001)"
+            value="agent-001"
+          />
+          <button onclick="subscribe()" id="subscribeBtn">
+            Subscribe to Notifications
+          </button>
+        </div>
+      </div>
+
+      <div class="status pending" id="status">
+        ⏳ Chưa kết nối - Nhấn "Subscribe" để bắt đầu nhận thông báo
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="number" id="totalNotifications">0</div>
+          <div class="label">Total Notifications</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="chatNotifications">0</div>
+          <div class="label">Chat Notifications</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="ticketNotifications">0</div>
+          <div class="label">Ticket Notifications</div>
+        </div>
+      </div>
+
+      <div class="notifications" id="notifications">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"
+            />
+          </svg>
+          <p>Chưa có thông báo nào</p>
+          <p style="font-size: 12px; margin-top: 8px">
+            Thông báo sẽ xuất hiện ở đây khi có hoạt động mới
+          </p>
+        </div>
+      </div>
+
+      <button class="clear-btn" onclick="clearNotifications()">
+        🗑️ Clear All Notifications
+      </button>
+    </div>
+
+    <script>
+      let socket;
+      let agentId;
+      let notifications = [];
+      let stats = {
+        total: 0,
+        chat: 0,
+        ticket: 0,
+      };
+
+      function updateStatus(text, type = "pending") {
+        const statusEl = document.getElementById("status");
+        statusEl.textContent = text;
+        statusEl.className = `status ${type}`;
+      }
+
+      function updateStats() {
+        document.getElementById("totalNotifications").textContent = stats.total;
+        document.getElementById("chatNotifications").textContent = stats.chat;
+        document.getElementById("ticketNotifications").textContent =
+          stats.ticket;
+      }
+
+      function subscribe() {
+        const agentIdInput = document.getElementById("agentId").value.trim();
+        const subscribeBtn = document.getElementById("subscribeBtn");
+
+        if (!agentIdInput) {
+          alert("⚠️ Vui lòng nhập Agent ID");
+          return;
+        }
+
+        agentId = agentIdInput;
+        subscribeBtn.disabled = true;
+        subscribeBtn.textContent = "Đang kết nối...";
+
+        updateStatus("🔄 Đang kết nối tới notification server...", "pending");
+
+        // Kết nối WebSocket
+        socket = io("http://localhost:3000/notifications", {
+          transports: ["websocket", "polling"],
+          reconnection: true,
+        });
+
+        socket.on("connect", () => {
+          updateStatus(
+            "✅ Đã kết nối - Đang đăng ký nhận thông báo...",
+            "connected"
+          );
+
+          // Subscribe to notifications
+          socket.emit("subscribe", { agentId: agentId });
+        });
+
+        socket.on("subscribed", (data) => {
+          updateStatus(
+            `✅ Đã đăng ký thành công - Agent: ${agentId}`,
+            "connected"
+          );
+          subscribeBtn.textContent = "✅ Đã Subscribe";
+          console.log("✅ Subscribed:", data);
+        });
+
+        socket.on("notification", (notification) => {
+          console.log("📢 New notification:", notification);
+          addNotification(notification);
+        });
+
+        socket.on("connect_error", (error) => {
+          updateStatus("❌ Lỗi kết nối: " + error.message, "error");
+          subscribeBtn.disabled = false;
+          subscribeBtn.textContent = "Subscribe to Notifications";
+        });
+
+        socket.on("disconnect", () => {
+          updateStatus("❌ Mất kết nối", "error");
+        });
+      }
+
+      function addNotification(notification) {
+        notifications.unshift(notification);
+        stats.total++;
+
+        if (notification.type === "chat") {
+          stats.chat++;
+        } else if (notification.type === "ticket") {
+          stats.ticket++;
+        }
+
+        updateStats();
+        renderNotifications();
+
+        // Show browser notification if permission granted
+        if (Notification.permission === "granted") {
+          new Notification(notification.title, {
+            body: notification.message,
+            icon: "🔔",
+          });
+        }
+
+        // Play sound (optional)
+        playNotificationSound();
+      }
+
+      function renderNotifications() {
+        const container = document.getElementById("notifications");
+
+        if (notifications.length === 0) {
+          container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                        </svg>
+                        <p>Chưa có thông báo nào</p>
+                    </div>
+                `;
+          return;
+        }
+
+        container.innerHTML = notifications
+          .map((notif) => {
+            const icon =
+              notif.type === "chat"
+                ? "💬"
+                : notif.type === "ticket"
+                ? "🎫"
+                : "📢";
+            const time = new Date(notif.timestamp).toLocaleString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "2-digit",
+            });
+
+            return `
+                    <div class="notification-item">
+                        <div class="notification-icon ${notif.type}">
+                            ${icon}
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">
+                                ${notif.title}
+                                <span class="badge new">NEW</span>
+                            </div>
+                            <div class="notification-message">${notif.message}</div>
+                            <div class="notification-time">⏰ ${time}</div>
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      function clearNotifications() {
+        if (confirm("Xóa tất cả thông báo?")) {
+          notifications = [];
+          stats = { total: 0, chat: 0, ticket: 0 };
+          updateStats();
+          renderNotifications();
+        }
+      }
+
+      function playNotificationSound() {
+        // Simple beep sound
+        const audioContext = new (window.AudioContext ||
+          window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = "sine";
+
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.1
+        );
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+      }
+
+      // Request notification permission on load
+      window.addEventListener("load", () => {
+        if (Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+
+        // Check server
+        fetch("http://localhost:3000/api/customers")
+          .then((response) => {
+            if (response.ok) {
+              console.log("✅ Server is running");
+            }
+          })
+          .catch(() => {
+            updateStatus(
+              "⚠️ Server không chạy. Khởi động server trước: npm run start:dev",
+              "error"
+            );
+          });
+      });
+    </script>
+  </body>
+</html>
