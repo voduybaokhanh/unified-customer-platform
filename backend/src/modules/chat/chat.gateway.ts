@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { StartChatDto } from './dto/start-chat.dto';
+import { NotificationsGateway } from '../timeline/notifications.gateway';
 
 @WebSocketGateway({
   cors: {
@@ -27,7 +28,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private logger = new Logger('ChatGateway');
   private activeSockets = new Map<string, string>(); // socketId -> sessionId
 
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private notificationsGateway: NotificationsGateway,
+  ) {}
 
   /**
    * Khi client kết nối WebSocket
@@ -79,6 +83,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           ? 'Chào mừng bạn đến với hệ thống!' 
           : 'Chào mừng bạn quay lại!',
       });
+
+       // ✅ Gửi notification cho agents
+    this.notificationsGateway.notifyNewChatSession(
+      session.id,
+      customer.email,
+    );
 
       // Thông báo cho agents có customer mới
       this.server.to('agents').emit('newChatSession', {
