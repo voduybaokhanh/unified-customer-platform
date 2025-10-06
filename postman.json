@@ -1,10 +1,9 @@
 {
   "info": {
-    "name": "Unified Customer Platform - Complete API",
-    "description": "Complete API collection for CRM and Live Chat modules\n\n**Setup:**\n1. Set variable `base_url` = http://localhost:3000\n2. After creating a customer, copy `id` to variable `customer_id`\n3. After starting a chat, copy `sessionId` to variable `session_id`\n\n**Test Order:**\n1. CRM APIs (1-6)\n2. Start chat with HTML client\n3. Copy session ID\n4. Chat REST APIs (11-15)",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_postman_id": "unified-customer-platform",
-    "version": "1.0.0"
+    "name": "Unified Customer Platform - API Collection",
+    "_postman_id": "unified-customer-platform-2025",
+    "description": "Full API: CRM + Error Cases + Live Chat + Tickets + Documentation\n\n**Steps:**\n1. Run `1. Create Customer` → auto save `customer_id`\n2. Use HTML chat widget → copy `sessionId` → auto save `session_id`\n3. Run `16. Convert Chat to Ticket` → auto save `ticket_id`\n4. Other APIs use saved variables.\n\n**Variables:** base_url, customer_id, session_id, ticket_id, ticket_number",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
@@ -12,172 +11,141 @@
       "item": [
         {
           "name": "1. Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const res = pm.response.json();",
+                  "  pm.collectionVariables.set('customer_id', res.data.id);",
+                  "  console.log('✅ Saved customer_id:', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"John Doe\",\n  \"phone\": \"0123456789\",\n  \"company\": \"ABC Corporation\"\n}"
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"John Doe\",\n  \"phone\": \"0123456789\",\n  \"company\": \"ABC Corp\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/customers",
               "host": ["{{base_url}}"],
               "path": ["api", "customers"]
-            },
-            "description": "Tạo khách hàng mới trong hệ thống CRM"
+            }
           }
         },
         {
-          "name": "2. Get All Customers (Paginated)",
+          "name": "2. Get All Customers",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/customers?page=1&limit=10",
               "host": ["{{base_url}}"],
               "path": ["api", "customers"],
               "query": [
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
-                },
-                {
-                  "key": "limit",
-                  "value": "10",
-                  "description": "Items per page (default: 10, max: 100)"
-                }
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
               ]
-            },
-            "description": "Lấy danh sách khách hàng có phân trang"
+            }
           }
         },
         {
           "name": "3. Find Customer by Email",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/customers/email/john.doe@example.com",
               "host": ["{{base_url}}"],
               "path": ["api", "customers", "email", "john.doe@example.com"]
-            },
-            "description": "Tìm khách hàng theo email (dùng cho Live Chat lookup)"
+            }
           }
         },
         {
           "name": "4. Get Customer by ID",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/customers/{{customer_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "customers", "{{customer_id}}"]
-            },
-            "description": "Lấy thông tin chi tiết khách hàng theo ID"
+            }
           }
         },
         {
           "name": "5. Update Customer",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"0987654321\",\n  \"company\": \"XYZ Corporation\"\n}"
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"0987654321\",\n  \"company\": \"XYZ Corp\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/customers/{{customer_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "customers", "{{customer_id}}"]
-            },
-            "description": "Cập nhật thông tin khách hàng"
+            }
           }
         },
         {
           "name": "6. Delete Customer",
           "request": {
             "method": "DELETE",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/customers/{{customer_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "customers", "{{customer_id}}"]
-            },
-            "description": "Xóa khách hàng (chỉ khi không có chat/ticket liên quan)"
+            }
           }
         }
-      ],
-      "description": "APIs quản lý khách hàng (CRUD operations)"
+      ]
     },
     {
       "name": "❌ CRM - Error Cases",
       "item": [
         {
-          "name": "7. Create - Duplicate Email (Error 409)",
+          "name": "7. Create - Duplicate Email (409)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"Another John\"\n}"
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"Dup User\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/customers",
               "host": ["{{base_url}}"],
               "path": ["api", "customers"]
-            },
-            "description": "Test validation: Email đã tồn tại"
+            }
           }
         },
         {
-          "name": "8. Create - Invalid Email (Error 400)",
+          "name": "8. Create - Invalid Email (400)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"invalid-email\",\n  \"name\": \"Test User\"\n}"
+              "raw": "{\n  \"email\": \"invalid-email\",\n  \"name\": \"Invalid\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/customers",
               "host": ["{{base_url}}"],
               "path": ["api", "customers"]
-            },
-            "description": "Test validation: Email format không hợp lệ"
+            }
           }
         },
         {
-          "name": "9. Create - Missing Required Fields (Error 400)",
+          "name": "9. Create - Missing Fields (400)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"phone\": \"0123456789\"\n}"
@@ -186,15 +154,13 @@
               "raw": "{{base_url}}/api/customers",
               "host": ["{{base_url}}"],
               "path": ["api", "customers"]
-            },
-            "description": "Test validation: Thiếu email và name (required)"
+            }
           }
         },
         {
-          "name": "10. Get - Customer Not Found (Error 404)",
+          "name": "10. Get - Customer Not Found (404)",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/customers/00000000-0000-0000-0000-000000000000",
               "host": ["{{base_url}}"],
@@ -203,65 +169,69 @@
                 "customers",
                 "00000000-0000-0000-0000-000000000000"
               ]
-            },
-            "description": "Test error: Customer không tồn tại"
+            }
           }
         }
-      ],
-      "description": "Test cases cho validation và error handling"
+      ]
     },
     {
       "name": "💬 Live Chat - Session Management",
       "item": [
         {
-          "name": "11. Get Active Chat Sessions",
+          "name": "11. Get Active Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const res = pm.response.json();",
+                  "  if (res.data && res.data[0]) {",
+                  "    pm.collectionVariables.set('session_id', res.data[0].id);",
+                  "    console.log('✅ Saved session_id:', res.data[0].id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/chat/sessions/active",
               "host": ["{{base_url}}"],
               "path": ["api", "chat", "sessions", "active"]
-            },
-            "description": "Lấy danh sách tất cả chat sessions đang active (chưa đóng)"
+            }
           }
         },
         {
-          "name": "12. Get Chat Session Details",
+          "name": "12. Get Session Details",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/chat/sessions/{{session_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "chat", "sessions", "{{session_id}}"]
-            },
-            "description": "Lấy thông tin chi tiết của một chat session (bao gồm thông tin customer)"
+            }
           }
         },
         {
           "name": "13. Get Chat History",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/chat/sessions/{{session_id}}/messages",
               "host": ["{{base_url}}"],
               "path": ["api", "chat", "sessions", "{{session_id}}", "messages"]
-            },
-            "description": "Lấy toàn bộ lịch sử chat của một session (tất cả messages)"
+            }
           }
         },
         {
-          "name": "14. Assign Agent to Session",
+          "name": "14. Assign Agent",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"agentId\": \"agent-001\"\n}"
@@ -270,34 +240,217 @@
               "raw": "{{base_url}}/api/chat/sessions/{{session_id}}/assign",
               "host": ["{{base_url}}"],
               "path": ["api", "chat", "sessions", "{{session_id}}", "assign"]
-            },
-            "description": "Gán agent vào một chat session (thường được gọi tự động khi agent join)"
+            }
           }
         },
         {
-          "name": "15. Close Chat Session",
+          "name": "15. Close Session",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}"
-            },
+            "body": { "mode": "raw", "raw": "{}" },
             "url": {
               "raw": "{{base_url}}/api/chat/sessions/{{session_id}}/close",
               "host": ["{{base_url}}"],
               "path": ["api", "chat", "sessions", "{{session_id}}", "close"]
-            },
-            "description": "Đóng một chat session (status: active → closed)"
+            }
           }
         }
-      ],
-      "description": "REST APIs quản lý chat sessions\n\n**Note:** WebSocket events không test được qua Postman. Dùng `chat-test.html` và `agent-test.html` để test real-time features."
+      ]
+    },
+    {
+      "name": "🎫 Tickets - Help Desk",
+      "item": [
+        {
+          "name": "16. Convert Chat to Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const res = pm.response.json();",
+                  "  pm.collectionVariables.set('ticket_id', res.data.id);",
+                  "  pm.collectionVariables.set('ticket_number', res.data.ticketNumber);",
+                  "  console.log('✅ Saved ticket_id & ticket_number');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Issue from Chat Session\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tickets/from-session/{{session_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "from-session", "{{session_id}}"]
+            }
+          }
+        },
+        {
+          "name": "17. Get All Tickets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tickets?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "18. Get Ticket by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tickets/{{ticket_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "{{ticket_id}}"]
+            }
+          }
+        },
+        {
+          "name": "19. Get Ticket by Number",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tickets/number/{{ticket_number}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "number", "{{ticket_number}}"]
+            }
+          }
+        },
+        {
+          "name": "20. Update Ticket Status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"In Progress\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tickets/{{ticket_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "{{ticket_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "21. Add Ticket Note",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Customer called again regarding the issue.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tickets/{{ticket_id}}/notes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "{{ticket_id}}", "notes"]
+            }
+          }
+        },
+        {
+          "name": "22. Assign Agent to Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agentId\": \"agent-002\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tickets/{{ticket_id}}/assign",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "{{ticket_id}}", "assign"]
+            }
+          }
+        },
+        {
+          "name": "23. Get Ticket Notes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tickets/{{ticket_id}}/notes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "{{ticket_id}}", "notes"]
+            }
+          }
+        },
+        {
+          "name": "24. Add Ticket Attachment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileUrl\": \"http://example.com/screenshot.png\",\n  \"description\": \"Screenshot of error\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tickets/{{ticket_id}}/attachments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "{{ticket_id}}", "attachments"]
+            }
+          }
+        },
+        {
+          "name": "25. Get Ticket Attachments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tickets/{{ticket_id}}/attachments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "{{ticket_id}}", "attachments"]
+            }
+          }
+        },
+        {
+          "name": "26. Search Tickets by Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tickets?status=Open",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets"],
+              "query": [{ "key": "status", "value": "Open" }]
+            }
+          }
+        },
+        {
+          "name": "27. Search Tickets by Agent",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tickets?agentId=agent-002",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets"],
+              "query": [{ "key": "agentId", "value": "agent-002" }]
+            }
+          }
+        },
+        {
+          "name": "28. Delete Ticket",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/tickets/{{ticket_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", "{{ticket_id}}"]
+            }
+          }
+        }
+      ]
     },
     {
       "name": "📖 Documentation & Info",
@@ -306,36 +459,21 @@
           "name": "Health Check",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{base_url}}/api/customers",
               "host": ["{{base_url}}"],
               "path": ["api", "customers"]
-            },
-            "description": "Simple health check - kiểm tra server có đang chạy không"
+            }
           }
         }
-      ],
-      "description": "Utility endpoints"
+      ]
     }
   ],
   "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:3000",
-      "type": "string"
-    },
-    {
-      "key": "customer_id",
-      "value": "",
-      "type": "string",
-      "description": "ID của customer (copy từ response sau khi tạo customer)"
-    },
-    {
-      "key": "session_id",
-      "value": "",
-      "type": "string",
-      "description": "ID của chat session (copy từ HTML test client hoặc GET active sessions)"
-    }
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "customer_id", "value": "" },
+    { "key": "session_id", "value": "" },
+    { "key": "ticket_id", "value": "" },
+    { "key": "ticket_number", "value": "" }
   ]
 }

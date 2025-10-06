@@ -19,6 +19,6 @@ export class UpdateTicketDto {
   priority?: 'low' | 'medium' | 'high' | 'urgent';
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   assignedTo?: string;
 }
