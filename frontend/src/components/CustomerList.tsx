@@ -2,12 +2,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerApi } from '../lib/api';
+import '../styles/customer-list.css';
 
 interface Customer {
   id: string;
   email: string;
   name: string;
   company?: string;
+  phone?: string;
   createdAt: string;
 }
 
@@ -16,6 +18,7 @@ export default function CustomerList() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,106 +42,89 @@ export default function CustomerList() {
     navigate(`/customer/${customerId}`);
   };
 
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (loading && customers.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-xl text-gray-600">Loading customers...</div>
+      <div className="loading-container">
+        <div>
+          <div className="loading-spinner"></div>
+          <p style={{ marginTop: '16px', color: '#65676b' }}>Loading customers...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-              + Add Customer
-            </button>
-          </div>
-        </div>
-
-        {/* Customer Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Company
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {customers.map((customer) => (
-                <tr
-                  key={customer.id}
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => handleCustomerClick(customer.id)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {customer.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{customer.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">
-                      {customer.company || '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">
-                      {new Date(customer.createdAt).toLocaleDateString('vi-VN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900">
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Pagination */}
-          <div className="bg-white px-6 py-4 flex items-center justify-between border-t">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-gray-700">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+    <div className="customer-list-container">
+      <div className="customer-list-header">
+        <h1>👥 Customer Management</h1>
+        <p>View and manage all your customers</p>
       </div>
+
+      <div className="search-box">
+        <input
+          type="text"
+          placeholder="🔍 Search by name or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {filteredCustomers.length > 0 ? (
+        <>
+          <div className="customer-grid">
+            {filteredCustomers.map((customer) => (
+              <div
+                key={customer.id}
+                className="customer-card"
+                onClick={() => handleCustomerClick(customer.id)}
+              >
+                <div className="customer-avatar">
+                  {customer.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="customer-name">{customer.name}</div>
+                <div className="customer-email">{customer.email}</div>
+                {customer.company && (
+                  <div className="customer-company">🏢 {customer.company}</div>
+                )}
+                <div className="customer-meta">
+                  <span className="customer-badge">
+                    📅 {new Date(customer.createdAt).toLocaleDateString('vi-VN')}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                ← Previous
+              </button>
+              <span>Page {page} of {totalPages}</span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="empty-state">
+          <div className="empty-state-icon">🔍</div>
+          <h3>No customers found</h3>
+          <p>Try adjusting your search</p>
+        </div>
+      )}
     </div>
   );
 }

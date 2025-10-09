@@ -1,8 +1,9 @@
 // frontend/src/components/Customer360View.tsx
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { customerApi, timelineApi, ticketApi } from '../lib/api';
 import { useRealtimeNotifications } from '../hooks/useRealtime';
+import '../styles/customer-360.css';
 
 interface Customer {
   id: string;
@@ -30,6 +31,7 @@ interface TimelineEvent {
 
 export default function Customer360View() {
   const { customerId } = useParams<{ customerId: string }>();
+  const navigate = useNavigate();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
@@ -37,7 +39,6 @@ export default function Customer360View() {
   const [loading, setLoading] = useState(true);
   const { notifications } = useRealtimeNotifications('dashboard-viewer');
 
-  // === FETCH INITIAL DATA ===
   useEffect(() => {
     if (!customerId) return;
 
@@ -64,171 +65,198 @@ export default function Customer360View() {
     fetchData();
   }, [customerId]);
 
-  // === REALTIME UPDATE (Notifications) ===
   useEffect(() => {
     if (notifications.length > 0 && customerId) {
-      timelineApi.getCustomerTimeline(customerId).then((res) => {
+      timelineApi.getCustomerTimeline(customerId).then(res => {
         setTimeline(res.data.data);
       });
     }
   }, [notifications, customerId]);
 
-  // === RENDER ===
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-xl text-gray-600">Loading...</div>
+      <div className="loading-container">
+        <div>
+          <div className="loading-spinner"></div>
+          <p style={{ marginTop: '16px', color: '#65676b' }}>Loading customer data...</p>
+        </div>
       </div>
     );
   }
 
   if (!customer) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-xl text-red-600">Customer not found</div>
+      <div className="loading-container">
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>😞</div>
+          <h2>Customer Not Found</h2>
+          <button 
+            onClick={() => navigate('/')}
+            className="btn btn-primary"
+            style={{ marginTop: '20px' }}
+          >
+            Back to List
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{customer.name}</h1>
-              <p className="text-gray-600 mt-1">{customer.email}</p>
-              {customer.phone && <p className="text-gray-600">{customer.phone}</p>}
-              {customer.company && (
-                <p className="text-gray-500 text-sm mt-2">{customer.company}</p>
-              )}
+    <div className="customer-360-container">
+      {/* Navigation */}
+      <div className="customer-360-nav">
+        <button className="back-button" onClick={() => navigate('/')}>
+          ← Back
+        </button>
+        <h1>Customer 360° View</h1>
+      </div>
+
+      {/* Customer Header */}
+      <div className="customer-header">
+        <div className="customer-header-content">
+          <div className="customer-header-avatar">
+            {customer.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="customer-header-info">
+            <h2>{customer.name}</h2>
+            <p>📧 {customer.email}</p>
+            {customer.phone && <p>📱 {customer.phone}</p>}
+            {customer.company && <p>🏢 {customer.company}</p>}
+          </div>
+          <div className="customer-header-actions">
+            <button className="btn btn-primary">💬 Start Chat</button>
+            <button className="btn btn-primary">🎫 Create Ticket</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      {stats && (
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon">💬</div>
+            <div className="stat-label">Total Chats</div>
+            <div className="stat-value" style={{ color: '#3b82f6' }}>{stats.totalChats}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">🎫</div>
+            <div className="stat-label">Total Tickets</div>
+            <div className="stat-value" style={{ color: '#8b5cf6' }}>{stats.totalTickets}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">📋</div>
+            <div className="stat-label">Open Tickets</div>
+            <div className="stat-value" style={{ color: '#f59e0b' }}>
+              {stats.ticketsByStatus.open || 0}
             </div>
-            <div className="flex gap-2">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Start Chat
-              </button>
-              <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                Create Ticket
-              </button>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">✅</div>
+            <div className="stat-label">Resolved</div>
+            <div className="stat-value" style={{ color: '#10b981' }}>
+              {stats.ticketsByStatus.resolved || 0}
             </div>
           </div>
         </div>
+      )}
 
-        {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <StatCard label="Total Chats" value={stats.totalChats} color="text-blue-600" />
-            <StatCard label="Total Tickets" value={stats.totalTickets} color="text-purple-600" />
-            <StatCard
-              label="Open Tickets"
-              value={stats.ticketsByStatus.open || 0}
-              color="text-orange-600"
-            />
-            <StatCard
-              label="Resolved"
-              value={stats.ticketsByStatus.resolved || 0}
-              color="text-green-600"
-            />
+      {/* Timeline & Tickets */}
+      <div className="content-grid">
+        {/* Timeline */}
+        <div className="timeline-card">
+          <div className="card-header">
+            <span style={{ fontSize: '24px' }}>📊</span>
+            <h3>Activity Timeline</h3>
+            <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#65676b' }}>
+              {timeline.length} events
+            </span>
           </div>
-        )}
+          <div className="timeline-list">
+            {timeline.map((event) => (
+              <TimelineItem key={event.id} event={event} />
+            ))}
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Timeline */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Activity Timeline</h2>
-            <div className="space-y-4">
-              {timeline.length > 0 ? (
-                timeline.map((event) => <TimelineItem key={event.id} event={event} />)
-              ) : (
-                <p className="text-gray-500">No recent activity</p>
-              )}
+        {/* Recent Tickets */}
+        <div className="tickets-card">
+          <div className="card-header">
+            <span style={{ fontSize: '24px' }}>🎫</span>
+            <h3>Recent Tickets</h3>
+          </div>
+          {tickets.length > 0 ? (
+            tickets.slice(0, 5).map((ticket) => (
+              <TicketItem key={ticket.id} ticket={ticket} />
+            ))
+          ) : (
+            <div className="empty-state">
+              <div className="empty-state-icon">📭</div>
+              <p>No tickets yet</p>
             </div>
-          </div>
-
-          {/* Recent Tickets */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Recent Tickets</h2>
-            <div className="space-y-3">
-              {tickets.length > 0 ? (
-                tickets.slice(0, 5).map((ticket) => (
-                  <TicketItem key={ticket.id} ticket={ticket} />
-                ))
-              ) : (
-                <p className="text-gray-500">No tickets yet</p>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// === COMPONENTS ===
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="text-sm text-gray-600">{label}</div>
-      <div className={`text-3xl font-bold mt-2 ${color}`}>{value}</div>
-    </div>
-  );
-}
-
 function TimelineItem({ event }: { event: TimelineEvent }) {
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'chat':
-        return '💬';
-      case 'ticket_created':
-        return '🎫';
-      case 'ticket_updated':
-        return '📝';
-      case 'ticket_closed':
-        return '✅';
-      default:
-        return '📌';
-    }
+  const getEventIcon = (type: string) => {
+    const icons: Record<string, { emoji: string; class: string }> = {
+      chat: { emoji: '💬', class: 'chat' },
+      ticket_created: { emoji: '🎫', class: 'ticket' },
+      ticket_updated: { emoji: '📝', class: 'update' },
+      ticket_closed: { emoji: '✅', class: 'closed' },
+    };
+    return icons[type] || { emoji: '📌', class: 'chat' };
   };
 
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const icon = getEventIcon(event.type);
 
   return (
-    <div className="flex items-start gap-3 pb-4 border-b last:border-0">
-      <div className="text-2xl">{getIcon(event.type)}</div>
-      <div className="flex-1">
-        <p className="text-gray-900">{event.description}</p>
-        <p className="text-sm text-gray-500 mt-1">{formatDate(event.timestamp)}</p>
+    <div className="timeline-item">
+      <div className={`timeline-icon ${icon.class}`}>
+        {icon.emoji}
+      </div>
+      <div className="timeline-content">
+        <div className="timeline-description">{event.description}</div>
+        <div className="timeline-time">{formatDate(event.timestamp)}</div>
       </div>
     </div>
   );
 }
 
 function TicketItem({ ticket }: { ticket: any }) {
-  const statusColors: Record<string, string> = {
-    open: 'bg-yellow-100 text-yellow-800',
-    in_progress: 'bg-blue-100 text-blue-800',
-    resolved: 'bg-green-100 text-green-800',
-    closed: 'bg-gray-100 text-gray-800',
-  };
-
   return (
-    <div className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="font-medium text-sm">{ticket.ticketNumber}</p>
-          <p className="text-sm text-gray-600 mt-1">{ticket.subject}</p>
-        </div>
-        <span className={`text-xs px-2 py-1 rounded ${statusColors[ticket.status] || ''}`}>
+    <div className="ticket-item">
+      <div className="ticket-header">
+        <span className="ticket-number">{ticket.ticketNumber}</span>
+        <span className={`ticket-status ${ticket.status}`}>
           {ticket.status}
         </span>
+      </div>
+      <div className="ticket-subject">{ticket.subject}</div>
+      <div className="ticket-meta">
+        {ticket.priority === 'urgent' && '🔴 '}
+        {ticket.priority === 'high' && '🟠 '}
+        {ticket.priority === 'medium' && '🟡 '}
+        {ticket.priority === 'low' && '🟢 '}
+        {ticket.priority} • {new Date(ticket.createdAt).toLocaleDateString('vi-VN')}
       </div>
     </div>
   );
