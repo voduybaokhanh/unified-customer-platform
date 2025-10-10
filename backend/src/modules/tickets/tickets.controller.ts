@@ -8,11 +8,16 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
   HttpCode,
   HttpStatus,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
@@ -20,47 +25,42 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { ConvertChatToTicketDto } from './dto/convert-chat-to-ticket.dto';
 
 @Controller('api/tickets')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
-  /**
-   * POST /api/tickets
-   * Tạo ticket mới
-   */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateTicketDto) {
+  @Roles('admin', 'agent')
+  async create(@Body() dto: CreateTicketDto, @CurrentUser() user: any) {
     const ticket = await this.ticketsService.createTicket(dto);
     return {
       success: true,
       message: 'Tạo ticket thành công',
       data: ticket,
+      createdBy: user.name,
     };
   }
 
-  /**
-   * POST /api/tickets/convert-from-chat/:sessionId
-   * Convert chat session thành ticket (TÍNH NĂNG QUAN TRỌNG!)
-   */
   @Post('convert-from-chat/:sessionId')
   @HttpCode(HttpStatus.CREATED)
+  @Roles('admin', 'agent')
   async convertChatToTicket(
     @Param('sessionId') sessionId: string,
     @Body() dto: ConvertChatToTicketDto,
+    @CurrentUser() user: any,
   ) {
     const ticket = await this.ticketsService.convertChatToTicket(sessionId, dto);
     return {
       success: true,
       message: 'Convert chat thành ticket thành công',
       data: ticket,
+      convertedBy: user.name,
     };
   }
 
-  /**
-   * GET /api/tickets
-   * Lấy danh sách tickets với filter
-   */
   @Get()
+  @Roles('admin', 'agent')
   async findAll(
     @Query('status') status?: string,
     @Query('priority') priority?: string,
@@ -84,11 +84,8 @@ export class TicketsController {
     };
   }
 
-  /**
-   * GET /api/tickets/number/:ticketNumber
-   * Lấy ticket theo ticket number (TK-00001)
-   */
   @Get('number/:ticketNumber')
+  @Roles('admin', 'agent')
   async findByNumber(@Param('ticketNumber') ticketNumber: string) {
     const ticket = await this.ticketsService.getTicketByNumber(ticketNumber);
     return {
@@ -97,11 +94,8 @@ export class TicketsController {
     };
   }
 
-  /**
-   * GET /api/tickets/customer/:customerId
-   * Lấy tất cả tickets của customer
-   */
   @Get('customer/:customerId')
+  @Roles('admin', 'agent')
   async findByCustomer(@Param('customerId') customerId: string) {
     const tickets = await this.ticketsService.getCustomerTickets(customerId);
     return {
@@ -111,11 +105,8 @@ export class TicketsController {
     };
   }
 
-  /**
-   * GET /api/tickets/:id
-   * Lấy chi tiết ticket theo ID
-   */
   @Get(':id')
+  @Roles('admin', 'agent')
   async findOne(@Param('id') id: string) {
     const ticket = await this.ticketsService.getTicketById(id);
     return {
@@ -124,28 +115,34 @@ export class TicketsController {
     };
   }
 
-  /**
-   * PUT /api/tickets/:id
-   * Cập nhật ticket
-   */
   @Put(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateTicketDto) {
+  @Roles('admin', 'agent')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTicketDto,
+    @CurrentUser() user: any,
+  ) {
     const ticket = await this.ticketsService.updateTicket(id, dto);
     return {
       success: true,
       message: 'Cập nhật ticket thành công',
       data: ticket,
+      updatedBy: user.name,
     };
   }
 
-  /**
-   * POST /api/tickets/:id/comments
-   * Thêm comment vào ticket
-   */
   @Post(':id/comments')
   @HttpCode(HttpStatus.CREATED)
-  async addComment(@Param('id') id: string, @Body() dto: CreateCommentDto) {
-    const comment = await this.ticketsService.addComment(id, dto);
+  @Roles('admin', 'agent')
+  async addComment(
+    @Param('id') id: string,
+    @Body() dto: CreateCommentDto,
+    @CurrentUser() user: any,
+  ) {
+    const comment = await this.ticketsService.addComment(id, {
+      ...dto,
+      userId: user.id, // Override userId với current user
+    });
     return {
       success: true,
       message: 'Thêm comment thành công',
@@ -153,11 +150,8 @@ export class TicketsController {
     };
   }
 
-  /**
-   * GET /api/tickets/:id/comments
-   * Lấy danh sách comments của ticket
-   */
   @Get(':id/comments')
+  @Roles('admin', 'agent')
   async getComments(@Param('id') id: string) {
     const comments = await this.ticketsService.getComments(id);
     return {
@@ -167,13 +161,11 @@ export class TicketsController {
     };
   }
 
-  /**
-   * DELETE /api/tickets/:id
-   * Xóa ticket (soft delete - chuyển sang closed)
-   */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
+  @Roles('admin') // Chỉ admin mới xóa được
+  async remove(@Param('id') id: string, @CurrentUser() user: any) {
     await this.ticketsService.deleteTicket(id);
+    console.log(`Ticket ${id} deleted by ${user.email}`);
   }
 }
