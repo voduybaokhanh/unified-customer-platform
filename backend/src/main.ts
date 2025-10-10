@@ -2,6 +2,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
@@ -46,6 +47,8 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
   
   logger.log(`🚀 Server is running on http://localhost:${port}`);
   logger.log(`🔒 Security: Helmet, CORS, Rate Limiting enabled`);
