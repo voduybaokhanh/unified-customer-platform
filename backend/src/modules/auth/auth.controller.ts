@@ -8,7 +8,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import type  { AuthService, RegisterDto, LoginDto } from './auth.service';
+import { AuthService } from './auth.service';
+import type { RegisterDto, LoginDto } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 
