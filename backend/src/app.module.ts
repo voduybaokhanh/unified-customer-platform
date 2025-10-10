@@ -1,6 +1,7 @@
 // backend/src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { CrmModule } from './modules/crm/crm.module';
 import { ChatModule } from './modules/chat/chat.module';
@@ -13,6 +14,10 @@ import { AuthModule } from './modules/auth/auth.module';
     ConfigModule.forRoot({
       isGlobal: true, // Make ConfigModule global
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 60 seconds
+      limit: 10, // 10 requests per 60 seconds
+    }]),
     PrismaModule,
     CrmModule,
     ChatModule,
