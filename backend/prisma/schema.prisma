@@ -96,3 +96,16 @@ model CustomerActivity {
 
   @@map("customer_activities")
 }
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed password
+  name      String
+  role      String   @default("agent") // admin, agent, customer
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
