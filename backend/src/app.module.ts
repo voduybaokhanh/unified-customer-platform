@@ -6,6 +6,7 @@ import { CrmModule } from './modules/crm/crm.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { TimelineModule } from './modules/timeline/timeline.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TimelineModule } from './modules/timeline/timeline.module';
     ChatModule,
     TicketsModule,
     TimelineModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
