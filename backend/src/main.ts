@@ -13,7 +13,19 @@ async function bootstrap() {
   });
 
   // Security: Helmet - Protect HTTP headers
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // Security: CORS
   app.enableCors({
@@ -24,14 +36,32 @@ async function bootstrap() {
   });
 
   // Security: Rate Limiting
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 100,
-    message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-  });
-  app.use(limiter);
+  app.use(
+    '/api',
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // Max 100 requests per IP per 15 minutes
+      message: {
+        success: false,
+        message: 'Too many requests from this IP, please try again later.',
+      },
+      standardHeaders: true,
+      legacyHeaders: false,
+    }),
+  );
+
+  // Stricter rate limit for auth endpoints
+  app.use(
+    '/api/auth',
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 10, // Max 10 requests per IP per 15 minutes
+      message: {
+        success: false,
+        message: 'Too many authentication attempts, please try again later.',
+      },
+    }),
+  );
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -42,17 +72,41 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      disableErrorMessages: process.env.NODE_ENV === 'production',
     }),
   );
 
+  // GLOBAL PREFIX
+  app.setGlobalPrefix('api');
+
+  // GRACEFUL SHUTDOWN
+  app.enableShutdownHooks();
+
+  // START SERVER
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
   app.useGlobalInterceptors(new LoggingInterceptor());
-  
-  logger.log(`🚀 Server is running on http://localhost:${port}`);
-  logger.log(`🔒 Security: Helmet, CORS, Rate Limiting enabled`);
-  logger.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  // STARTUP LOGS
+  logger.log('========================================');
+  logger.log('🚀 Server Started Successfully');
+  logger.log('========================================');
+  logger.log(`📍 URL: http://localhost:${port}`);
+  logger.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.log(`🔒 Security:`);
+  logger.log(`   - Helmet: ✅ Enabled`);
+  logger.log(
+    `   - CORS: ✅ Enabled (${process.env.FRONTEND_URL || 'http://localhost:5173'})`,
+  );
+  logger.log(`   - Rate Limiting: ✅ Enabled (100 req/15min)`);
+  logger.log(`   - Auth Rate Limit: ✅ Enabled (10 req/15min)`);
+  logger.log(`📊 Features:`);
+  logger.log(`   - JWT Authentication: ✅`);
+  logger.log(`   - Role-based Access: ✅`);
+  logger.log(`   - WebSocket (Chat): ✅`);
+  logger.log(`   - WebSocket (Notifications): ✅`);
+  logger.log('========================================');
 }
 
 bootstrap().catch((error) => {
