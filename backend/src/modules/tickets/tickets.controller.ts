@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Role } from '../auth/dto/register.dto';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
@@ -31,7 +32,7 @@ export class TicketsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async create(@Body() dto: CreateTicketDto, @CurrentUser() user: any) {
     const ticket = await this.ticketsService.createTicket(dto);
     return {
@@ -44,7 +45,7 @@ export class TicketsController {
 
   @Post('convert-from-chat/:sessionId')
   @HttpCode(HttpStatus.CREATED)
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async convertChatToTicket(
     @Param('sessionId') sessionId: string,
     @Body() dto: ConvertChatToTicketDto,
@@ -60,7 +61,7 @@ export class TicketsController {
   }
 
   @Get()
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async findAll(
     @Query('status') status?: string,
     @Query('priority') priority?: string,
@@ -85,7 +86,7 @@ export class TicketsController {
   }
 
   @Get('number/:ticketNumber')
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async findByNumber(@Param('ticketNumber') ticketNumber: string) {
     const ticket = await this.ticketsService.getTicketByNumber(ticketNumber);
     return {
@@ -95,7 +96,7 @@ export class TicketsController {
   }
 
   @Get('customer/:customerId')
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async findByCustomer(@Param('customerId') customerId: string) {
     const tickets = await this.ticketsService.getCustomerTickets(customerId);
     return {
@@ -106,7 +107,7 @@ export class TicketsController {
   }
 
   @Get(':id')
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async findOne(@Param('id') id: string) {
     const ticket = await this.ticketsService.getTicketById(id);
     return {
@@ -116,7 +117,7 @@ export class TicketsController {
   }
 
   @Put(':id')
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateTicketDto,
@@ -133,7 +134,7 @@ export class TicketsController {
 
   @Post(':id/comments')
   @HttpCode(HttpStatus.CREATED)
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async addComment(
     @Param('id') id: string,
     @Body() dto: CreateCommentDto,
@@ -151,7 +152,7 @@ export class TicketsController {
   }
 
   @Get(':id/comments')
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async getComments(@Param('id') id: string) {
     const comments = await this.ticketsService.getComments(id);
     return {
@@ -163,7 +164,7 @@ export class TicketsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles('admin') // Chỉ admin mới xóa được
+  @Roles(Role.ADMIN) // Chỉ admin mới xóa được
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
     await this.ticketsService.deleteTicket(id);
     console.log(`Ticket ${id} deleted by ${user.email}`);

@@ -9,9 +9,14 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import type { RegisterDto, LoginDto } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { Public } from './decorators/public.decorator';
+import { AuthThrottle, RegisterThrottle } from '../../common/decorators/throttle.decorator';
 
 @Controller('api/auth')
 export class AuthController {
@@ -22,14 +27,11 @@ export class AuthController {
    * Đăng ký tài khoản mới
    */
   @Post('register')
+  @Public()
+  @RegisterThrottle()
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: RegisterDto) {
-    const result = await this.authService.register(dto);
-    return {
-      success: true,
-      message: 'Đăng ký thành công',
-      data: result,
-    };
+    return await this.authService.register(dto);
   }
 
   /**
@@ -37,40 +39,51 @@ export class AuthController {
    * Đăng nhập
    */
   @Post('login')
+  @Public()
+  @AuthThrottle()
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
-    const result = await this.authService.login(dto);
-    return {
-      success: true,
-      message: 'Đăng nhập thành công',
-      data: result,
-    };
-  }
-
-  /**
-   * GET /api/auth/profile
-   * Lấy thông tin user hiện tại (cần JWT token)
-   */
-  @Get('profile')
-  @UseGuards(JwtAuthGuard)
-  async getProfile(@CurrentUser() user: any) {
-    return {
-      success: true,
-      data: user,
-    };
+    return await this.authService.login(dto);
   }
 
   /**
    * POST /api/auth/refresh
-   * Refresh JWT token
+   * Refresh access token using refresh token
    */
   @Post('refresh')
-  @UseGuards(JwtAuthGuard)
-  async refreshToken(@CurrentUser() user: any) {
-    const token = await this.authService.refreshToken(user.id);
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(@Body() dto: RefreshTokenDto) {
+    const tokens = await this.authService.refreshAccessToken(dto);
     return {
       success: true,
-      data: { token },
+      message: 'Token refreshed successfully',
+      data: tokens,
+    };
+  }
+
+  /**
+   * POST /api/auth/logout
+   * Đăng xuất - vô hiệu hóa refresh token
+   */
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async logout(@CurrentUser() user: any) {
+    return await this.authService.logout(user.id);
+  }
+
+  /**
+   * GET /api/auth/me
+   * Lấy thông tin user hiện tại (cần JWT token)
+   */
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@CurrentUser() user: any) {
+    const profile = await this.authService.getProfile(user.id);
+    return {
+      success: true,
+      data: profile,
     };
   }
 }

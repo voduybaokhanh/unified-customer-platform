@@ -27,11 +27,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private logger = new Logger('ChatGateway');
   private activeSockets = new Map<string, string>(); // socketId -> sessionId
+  private messageRateLimit = new Map<string, { count: number; resetTime: number }>(); // Rate limiting for messages
 
   constructor(
     private chatService: ChatService,
     private notificationsGateway: NotificationsGateway,
-  ) {}
+  ) { }
 
   /**
    * Khi client kết nối WebSocket
@@ -63,7 +64,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       this.logger.log(`Start chat request from: ${dto.customerEmail}`);
 
-      const { session, customer, isNewCustomer } = 
+      const { session, customer, isNewCustomer } =
         await this.chatService.startChatSession(dto);
 
       // Join room theo sessionId
@@ -79,16 +80,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           name: customer.name,
         },
         isNewCustomer,
-        message: isNewCustomer 
-          ? 'Chào mừng bạn đến với hệ thống!' 
+        message: isNewCustomer
+          ? 'Chào mừng bạn đến với hệ thống!'
           : 'Chào mừng bạn quay lại!',
       });
 
-       // ✅ Gửi notification cho agents
-    this.notificationsGateway.notifyNewChatSession(
-      session.id,
-      customer.email,
-    );
+      // ✅ Gửi notification cho agents
+      this.notificationsGateway.notifyNewChatSession(
+        session.id,
+        customer.email,
+      );
 
       // Thông báo cho agents có customer mới
       this.server.to('agents').emit('newChatSession', {
@@ -121,9 +122,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
-    @MessageBody() data: { 
-      sessionId: string; 
-      content: string; 
+    @MessageBody() data: {
+      sessionId: string;
+      content: string;
       senderType: 'customer' | 'agent';
       senderId: string;
       senderName: string;
@@ -131,6 +132,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     try {
+      // Rate limiting: 60 messages per minute per sender
+      const now = Date.now();
+      const rateLimitKey = `${data.senderId}_${data.sessionId}`;
+      const rateLimit = this.messageRateLimit.get(rateLimitKey);
+
+      if (rateLimit) {
+        if (now < rateLimit.resetTime) {
+          if (rateLimit.count >= 60) {
+            client.emit('error', {
+              message: 'Rate limit exceeded. Maximum 60 messages per minute.',
+              code: 'RATE_LIMIT_EXCEEDED'
+            });
+            return { success: false, error: 'Rate limit exceeded' };
+          }
+          rateLimit.count++;
+        } else {
+          this.messageRateLimit.set(rateLimitKey, { count: 1, resetTime: now + 60000 });
+        }
+      } else {
+        this.messageRateLimit.set(rateLimitKey, { count: 1, resetTime: now + 60000 });
+      }
+
       // Lưu message vào database
       const message = await this.chatService.saveMessage({
         sessionId: data.sessionId,

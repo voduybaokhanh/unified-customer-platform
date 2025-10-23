@@ -98,14 +98,21 @@ model CustomerActivity {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String   // Hashed password
-  name      String
-  role      String   @default("agent") // admin, agent, customer
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String   // Hashed password
+  name         String
+  role         Role     @default(AGENT)
+  refreshToken String?  @map("refresh_token")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  CUSTOMER
 }

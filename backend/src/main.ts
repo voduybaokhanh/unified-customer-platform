@@ -3,14 +3,18 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { CustomLoggerService } from './common/logger/logger.service';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+    bufferLogs: true,
   });
+
+  // Use custom logger
+  app.useLogger(app.get(CustomLoggerService));
+  const logger = app.get(CustomLoggerService);
 
   // Security: Helmet - Protect HTTP headers
   app.use(
@@ -82,11 +86,12 @@ async function bootstrap() {
   // GRACEFUL SHUTDOWN
   app.enableShutdownHooks();
 
+  // Global interceptors
+  app.useGlobalInterceptors(new LoggingInterceptor());
+
   // START SERVER
   const port = process.env.PORT || 3000;
   await app.listen(port);
-
-  app.useGlobalInterceptors(new LoggingInterceptor());
 
   // STARTUP LOGS
   logger.log('========================================');
@@ -106,6 +111,8 @@ async function bootstrap() {
   logger.log(`   - Role-based Access: ✅`);
   logger.log(`   - WebSocket (Chat): ✅`);
   logger.log(`   - WebSocket (Notifications): ✅`);
+  logger.log(`   - Winston Logging: ✅`);
+  logger.log(`   - Health Check: ✅`);
   logger.log('========================================');
 }
 

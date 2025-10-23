@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Role } from '../auth/dto/register.dto';
 import { CrmService } from './crm.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -24,7 +25,7 @@ export class CrmController {
   constructor(private readonly crmService: CrmService) {}
 
   @Post()
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async create(@Body() dto: CreateCustomerDto, @CurrentUser() user: any) {
     const customer = await this.crmService.createCustomer(dto);
     return {
@@ -35,7 +36,7 @@ export class CrmController {
   }
 
   @Get()
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async findAll(@Query('page') page: number, @Query('limit') limit: number) {
     const result = await this.crmService.getCustomers(page, limit);
     return {
@@ -45,7 +46,7 @@ export class CrmController {
   }
 
   @Get('email/:email')
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async findByEmail(@Param('email') email: string) {
     const customer = await this.crmService.findByEmail(email);
     return {
@@ -55,7 +56,7 @@ export class CrmController {
   }
 
   @Get(':id')
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async findOne(@Param('id') id: string) {
     const customer = await this.crmService.getCustomerById(id);
     return {
@@ -65,7 +66,7 @@ export class CrmController {
   }
 
   @Put(':id')
-  @Roles('admin', 'agent')
+  @Roles(Role.ADMIN, Role.AGENT)
   async update(@Param('id') id: string, @Body() dto: UpdateCustomerDto) {
     const customer = await this.crmService.updateCustomer(id, dto);
     return {
@@ -76,7 +77,7 @@ export class CrmController {
   }
 
   @Delete(':id')
-  @Roles('admin') // Chỉ admin mới xóa
+  @Roles(Role.ADMIN) // Chỉ admin mới xóa
   async remove(@Param('id') id: string) {
     await this.crmService.deleteCustomer(id);
     return {
