@@ -87,7 +87,7 @@ npm run start:dev
 
 **Server chạy tại:** http://localhost:3000
 
-### 4. Setup Frontend (Coming soon)
+### 4. Setup Frontend
 
 ```bash
 cd frontend
