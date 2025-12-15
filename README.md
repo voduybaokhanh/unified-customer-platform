@@ -14,6 +14,7 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 - **PostgreSQL** (Database)
 - **Prisma** (ORM)
 - **Redis** (Cache & Pub/Sub)
+- **RabbitMQ** (Domain events)
 - **Socket.io** (WebSocket real-time)
 
 ### Frontend
@@ -22,6 +23,20 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 - **Tailwind CSS**
 - **Socket.io-client**
 - **React Query**
+
+---
+
+## 🧭 Problem Statement
+- Hợp nhất CRM, Live Chat, và Help Desk thành một nền tảng duy nhất cho 360° khách hàng.
+- Cần realtime chat, chuyển đổi chat → ticket, và RBAC cho agent/admin/customer.
+- Production yêu cầu: JWT + refresh, Redis cache, RabbitMQ events, Docker, CI/CD, và coverage ≥ 70%.
+
+## 🏗️ Architecture
+- API Gateway (NestJS) phục vụ Auth/CRM/Chat/Ticket qua REST + Socket.io.
+- Services: Auth, Chat, Tickets, CRM modules dùng Postgres (Prisma) + Redis.
+- Messaging: RabbitMQ topic exchange `ucp.domain.events` cho audit/sync.
+- Observability: Winston JSON logs + Correlation ID (`X-Request-Id`) per request.
+- Docs: OpenAPI 3 contract tại `docs/openapi/openapi.yaml`.
 
 ---
 
@@ -42,11 +57,11 @@ cd unified-customer-platform
 ### 2. Setup Database (Docker)
 
 ```bash
-# Khởi động PostgreSQL và Redis
-docker-compose up -d
+# Khởi động toàn bộ stack (Postgres + Redis + RabbitMQ + backend + frontend)
+docker-compose up -d --build
 
-# Kiểm tra containers đang chạy
-docker ps
+# Kiểm tra containers
+docker compose ps
 ```
 
 ### 3. Setup Backend
@@ -60,6 +75,7 @@ DATABASE_URL="postgresql://admin:admin123@localhost:5432/customer_platform"
 REDIS_HOST=localhost
 REDIS_PORT=6379
 PORT=3000
+RABBITMQ_URL=amqp://admin:admin@localhost:5672
 
 # Run migrations
 npx prisma migrate dev --name init
@@ -78,6 +94,16 @@ cd frontend
 npm install
 npm run dev
 ```
+
+---
+
+## 🔑 Quick Commands
+- One-command dev stack: `docker-compose up -d --build`
+- Backend unit + coverage: `cd backend && npm run test:cov`
+- Backend e2e: `cd backend && npm run test:e2e`
+- Lint backend: `cd backend && npm run lint`
+- Swagger/OpenAPI: see `docs/openapi/openapi.yaml` (use Swagger UI / Redoc to render)
+- Policy checks: `./ban-debug.sh && ./ban-try.sh && ./scripts/dependency-guard.sh`
 
 ---
 

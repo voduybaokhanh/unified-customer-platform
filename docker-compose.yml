@@ -16,10 +16,59 @@ services:
   redis:
     image: redis:7-alpine
     container_name: ucp_redis
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ucp_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ucp_backend
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://admin:90852@postgres:5432/customer_platform
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: change-me-dev
+      JWT_REFRESH_SECRET: change-me-refresh-dev
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ucp_frontend
+    environment:
+      VITE_API_URL: http://localhost:3000
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
 
 volumes:
   postgres_data:

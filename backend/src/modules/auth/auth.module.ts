@@ -10,11 +10,13 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { LoggerModule } from '../../common/logger/logger.module';
+import { MessagingModule } from '../../messaging/messaging.module';
 
 @Module({
   imports: [
     PassportModule,
     LoggerModule,
+    MessagingModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
       signOptions: { expiresIn: '1h' }, // Access token expires in 1 hour

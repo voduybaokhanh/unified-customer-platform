@@ -47,6 +47,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Run policy checks
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          cd ..
+          ./ban-debug.sh
+          ./ban-try.sh
+          ./scripts/dependency-guard.sh
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

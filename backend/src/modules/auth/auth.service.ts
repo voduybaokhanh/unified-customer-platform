@@ -9,6 +9,7 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthResponseDto, UserDto } from './dto/auth-response.dto';
 import { Role } from './dto/register.dto';
+import { MessagingService } from '../../messaging/messaging.service';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +17,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private logger: CustomLoggerService,
+    private messaging: MessagingService,
   ) {}
 
   /**
@@ -52,6 +54,12 @@ export class AuthService {
       const tokens = await this.generateTokens(user);
 
       this.logger.log(`User registered successfully: ${user.email} (${user.role})`, 'AuthService');
+      await this.messaging.publish('auth.user.registered', {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        occurredAt: new Date().toISOString(),
+      });
 
       return {
         success: true,
@@ -110,6 +118,12 @@ export class AuthService {
       const tokens = await this.generateTokens(user);
 
       this.logger.log(`User logged in successfully: ${user.email} (${user.role})`, 'AuthService');
+      await this.messaging.publish('auth.user.logged_in', {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        occurredAt: new Date().toISOString(),
+      });
 
       return {
         success: true,
@@ -223,6 +237,11 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: userId },
       data: { refreshToken: null },
+    });
+
+    await this.messaging.publish('auth.user.logged_out', {
+      userId,
+      occurredAt: new Date().toISOString(),
     });
 
     return {

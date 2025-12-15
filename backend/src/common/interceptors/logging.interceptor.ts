@@ -18,6 +18,7 @@ export class LoggingInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
     const { method, url, body, user, ip } = request;
+    const correlationId = request.correlationId;
     const userAgent = request.get('User-Agent') || '';
     const now = Date.now();
 
@@ -30,6 +31,7 @@ export class LoggingInterceptor implements NestInterceptor {
         url,
         ip,
         userAgent,
+        correlationId,
         userId: user?.id,
         userEmail: user?.email,
         body: this.sanitizeBody(body),
@@ -50,6 +52,7 @@ export class LoggingInterceptor implements NestInterceptor {
             statusCode: response.statusCode,
             duration: `${delay}ms`,
             ip,
+          correlationId,
             userId: user?.id,
           }
         );
@@ -73,6 +76,7 @@ export class LoggingInterceptor implements NestInterceptor {
             statusCode: error.status || 500,
             duration: `${delay}ms`,
             ip,
+            correlationId,
             userId: user?.id,
             error: error.message,
           }

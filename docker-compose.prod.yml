@@ -57,10 +57,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://admin:admin@rabbitmq:5672}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     volumes:
       - ./logs:/app/logs
@@ -88,10 +91,30 @@ services:
     networks:
       - app-network
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: always
+    container_name: customer-platform-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-admin}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
 volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  rabbitmq_data:
     driver: local
 
 networks:

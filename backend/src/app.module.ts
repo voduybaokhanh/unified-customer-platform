@@ -10,6 +10,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { TimelineModule } from './modules/timeline/timeline.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { MessagingModule } from './messaging/messaging.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AuthModule } from './modules/auth/auth.module';
     ]),
     PrismaModule,
     LoggerModule,
+    MessagingModule,
     HealthModule,
     AuthModule,
     CrmModule,

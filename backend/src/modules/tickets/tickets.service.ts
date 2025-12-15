@@ -10,10 +10,14 @@ import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ConvertChatToTicketDto } from './dto/convert-chat-to-ticket.dto';
 import { Ticket, TicketComment } from '@prisma/client';
+import { MessagingService } from '../../messaging/messaging.service';
 
 @Injectable()
 export class TicketsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private messaging: MessagingService,
+  ) {}
 
   /**
    * Tạo ticket mới
@@ -74,6 +78,15 @@ export class TicketsService {
         referenceId: ticket.id,
         description: `Ticket ${ticketNumber} được tạo: ${dto.subject}`,
       },
+    });
+
+    await this.messaging.publish('ticket.created', {
+      ticketId: ticket.id,
+      ticketNumber,
+      customerId: ticket.customerId,
+      priority: ticket.priority,
+      assignedTo: ticket.assignedTo,
+      occurredAt: new Date().toISOString(),
     });
 
     return ticket;
@@ -145,6 +158,14 @@ export class TicketsService {
         referenceId: ticket.id,
         description: `Chat session được convert thành ticket ${ticket.ticketNumber}`,
       },
+    });
+
+    await this.messaging.publish('ticket.converted_from_chat', {
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      chatSessionId: sessionId,
+      customerId: session.customerId,
+      occurredAt: new Date().toISOString(),
     });
 
     return ticket;
@@ -284,6 +305,13 @@ export class TicketsService {
       });
     }
 
+    await this.messaging.publish('ticket.updated', {
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      changes: dto,
+      occurredAt: new Date().toISOString(),
+    });
+
     return ticket;
   }
 
@@ -301,6 +329,14 @@ export class TicketsService {
         comment: dto.comment,
         isInternal: dto.isInternal || false,
       },
+    });
+
+    await this.messaging.publish('ticket.comment.created', {
+      ticketId,
+      commentId: comment.id,
+      userId: dto.userId,
+      isInternal: dto.isInternal || false,
+      occurredAt: new Date().toISOString(),
     });
 
     return comment;
@@ -327,6 +363,11 @@ export class TicketsService {
     await this.prisma.ticket.update({
       where: { id },
       data: { status: 'closed' },
+    });
+
+    await this.messaging.publish('ticket.deleted', {
+      ticketId: id,
+      occurredAt: new Date().toISOString(),
     });
   }
 

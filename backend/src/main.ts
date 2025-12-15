@@ -4,6 +4,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { CustomLoggerService } from './common/logger/logger.service';
+import { CorrelationIdInterceptor } from './common/interceptors/correlation-id.interceptor';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
@@ -87,7 +88,10 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   // Global interceptors
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(
+    new CorrelationIdInterceptor(),
+    new LoggingInterceptor(),
+  );
 
   // START SERVER
   const port = process.env.PORT || 3000;
@@ -117,6 +121,6 @@ async function bootstrap() {
 }
 
 bootstrap().catch((error) => {
-  console.error('Failed to start server:', error);
+  Logger.error('Failed to start server', error.stack || String(error));
   process.exit(1);
 });

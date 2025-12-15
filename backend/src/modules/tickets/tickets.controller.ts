@@ -165,8 +165,7 @@ export class TicketsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(Role.ADMIN) // Chỉ admin mới xóa được
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
+  async remove(@Param('id') id: string) {
     await this.ticketsService.deleteTicket(id);
-    console.log(`Ticket ${id} deleted by ${user.email}`);
   }
 }

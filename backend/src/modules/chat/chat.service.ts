@@ -5,12 +5,14 @@ import { CrmService } from '../crm/crm.service';
 import { StartChatDto } from './dto/start-chat.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { ChatSession, ChatMessage, Customer } from '@prisma/client';
+import { MessagingService } from '../../messaging/messaging.service';
 
 @Injectable()
 export class ChatService {
   constructor(
     private prisma: PrismaService,
     private crmService: CrmService,
+    private messaging: MessagingService,
   ) {}
 
   /**
@@ -51,6 +53,13 @@ export class ChatService {
         referenceId: session.id,
         description: `Bắt đầu chat session`,
       },
+    });
+
+    await this.messaging.publish('chat.session.started', {
+      sessionId: session.id,
+      customerId: customer.id,
+      isNewCustomer,
+      occurredAt: new Date().toISOString(),
     });
 
     return { session, customer, isNewCustomer };
@@ -108,6 +117,14 @@ export class ChatService {
       },
     });
 
+    await this.messaging.publish('chat.message.created', {
+      messageId: message.id,
+      sessionId: dto.sessionId,
+      senderId: dto.senderId,
+      senderType: dto.senderType,
+      occurredAt: new Date().toISOString(),
+    });
+
     return message;
   }
 
@@ -133,6 +150,12 @@ export class ChatService {
         referenceId: sessionId,
         description: `Kết thúc chat session`,
       },
+    });
+
+    await this.messaging.publish('chat.session.closed', {
+      sessionId,
+      customerId: session.customerId,
+      occurredAt: new Date().toISOString(),
     });
 
     return updatedSession;
@@ -166,9 +189,17 @@ export class ChatService {
   async assignAgent(sessionId: string, agentId: string): Promise<ChatSession> {
     await this.getChatSession(sessionId);
 
-    return this.prisma.chatSession.update({
+    const updated = await this.prisma.chatSession.update({
       where: { id: sessionId },
       data: { agentId },
     });
+
+    await this.messaging.publish('chat.session.assigned', {
+      sessionId,
+      agentId,
+      occurredAt: new Date().toISOString(),
+    });
+
+    return updated;
   }
 }
