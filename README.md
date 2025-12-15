@@ -9,6 +9,7 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 ## 🏗️ Tech Stack
 
 ### Backend
+
 - **NestJS** (Node.js framework)
 - **TypeScript**
 - **PostgreSQL** (Database)
@@ -18,6 +19,7 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 - **Socket.io** (WebSocket real-time)
 
 ### Frontend
+
 - **React + TypeScript**
 - **Vite** (Build tool)
 - **Tailwind CSS**
@@ -27,11 +29,13 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 ---
 
 ## 🧭 Problem Statement
+
 - Hợp nhất CRM, Live Chat, và Help Desk thành một nền tảng duy nhất cho 360° khách hàng.
 - Cần realtime chat, chuyển đổi chat → ticket, và RBAC cho agent/admin/customer.
 - Production yêu cầu: JWT + refresh, Redis cache, RabbitMQ events, Docker, CI/CD, và coverage ≥ 70%.
 
 ## 🏗️ Architecture
+
 - API Gateway (NestJS) phục vụ Auth/CRM/Chat/Ticket qua REST + Socket.io.
 - Services: Auth, Chat, Tickets, CRM modules dùng Postgres (Prisma) + Redis.
 - Messaging: RabbitMQ topic exchange `ucp.domain.events` cho audit/sync.
@@ -43,6 +47,7 @@ Hệ thống chăm sóc khách hàng all-in-one, tích hợp 3 module: **CRM**, 
 ## 🚀 Setup & Installation
 
 ### Prerequisites
+
 - Node.js >= 18
 - Docker & Docker Compose
 - npm hoặc yarn
@@ -98,6 +103,7 @@ npm run dev
 ---
 
 ## 🔑 Quick Commands
+
 - One-command dev stack: `docker-compose up -d --build`
 - Backend unit + coverage: `cd backend && npm run test:cov`
 - Backend e2e: `cd backend && npm run test:e2e`
@@ -110,12 +116,14 @@ npm run dev
 ## 📊 Development Progress
 
 ### ✅ Phase 1: Foundation & Setup (COMPLETED)
+
 - ✅ Docker setup (PostgreSQL + Redis)
 - ✅ NestJS project structure
 - ✅ Prisma schema & migrations
 - ✅ Global validation & error handling
 
 ### ✅ Phase 2: CRM Module (COMPLETED)
+
 - ✅ Customer CRUD APIs
 - ✅ Email lookup (for Live Chat integration)
 - ✅ Pagination support
@@ -123,6 +131,7 @@ npm run dev
 - ✅ Comprehensive error handling
 
 ### ✅ Phase 3: Live Chat Module (COMPLETED)
+
 - ✅ WebSocket setup with Socket.io
 - ✅ Chat session management
 - ✅ Real-time messaging (customer ↔ agent)
@@ -134,6 +143,7 @@ npm run dev
 - ✅ REST APIs for session management
 
 ### ✅ Phase 4: Help Desk Module (COMPLETED)
+
 - ✅ Ticket CRUD operations
 - ✅ Convert chat to ticket (1-click)
 - ✅ Ticket assignment & status workflow
@@ -142,25 +152,80 @@ npm run dev
 - ✅ Ticket number auto-generation (TK-00001, TK-00002...)
 
 ### ✅ Phase 5: Integration (COMPLETED)
+
 - ✅ Connect all modules seamlessly
 - ✅ Customer activity timeline
 - ✅ Unified notification system (WebSocket)
 - ✅ Customer statistics & analytics
 - ✅ Recent activity dashboard
 
-### ✅ Phase 6: 360° Customer View (PLANNED)
+### ✅ Phase 6: 360° Customer View (COMPLETED)
+
 - ✅ Customer detail page with full history
 - ✅ Timeline visualization
 - ✅ Related data aggregation
 - ✅ Analytics dashboard
 
-### 🚀 Phase 7: Production Ready (PLANNED)
-- ⬜ Authentication & Authorization (JWT)
-- ⬜ Role-based access control
-- ⬜ Rate limiting
-- ⬜ Logging & Monitoring
-- ⬜ Docker production setup
-- ⬜ CI/CD pipeline
+### ✅ Phase 7: Production Ready (COMPLETED)
+
+- ✅ JWT auth + refresh, RBAC (admin/agent/customer)
+- ✅ Rate limiting + Helmet + CORS
+- ✅ Logging with correlation IDs
+- ✅ RabbitMQ domain events
+- ✅ Docker production setup
+- ✅ CI/CD with policy gates
+
+---
+
+## 📄 Examples
+
+### Auth
+
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"agent@example.com","password":"VeryStrongP@ss1"}'
+```
+
+### Tickets (create)
+
+```bash
+curl -X POST http://localhost:3000/api/tickets \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"customerId":"<UUID>","subject":"Need help","description":"Details...","priority":"high"}'
+```
+
+### Chat (assign agent)
+
+```bash
+curl -X POST http://localhost:3000/api/chat/sessions/<SESSION_ID>/assign \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"agentId":"<AGENT_ID>"}'
+```
+
+---
+
+## 🧪 Tests
+
+- Unit + coverage: `cd backend && npm run test:cov` (threshold 70%)
+- E2E: `cd backend && npm run test:e2e`
+- Lint: `cd backend && npm run lint`
+
+---
+
+## 📜 API Docs
+
+- OpenAPI 3 spec: `docs/openapi/openapi.yaml` (serve via Swagger UI/Redoc)
+
+---
+
+## 🚢 Deployment
+
+- Local/prod compose: `docker-compose.yml` and `docker-compose.prod.yml`
+- Render blueprint: `render.yaml` (backend, frontend, managed Postgres/Redis; set `RABBITMQ_URL`, JWT secrets, FRONTEND_URL)
+- Healthcheck: `/api/health`
 
 ---
 
@@ -168,50 +233,50 @@ npm run dev
 
 ### 🔹 CRM Module APIs
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/customers` | Tạo khách hàng mới |
-| GET | `/api/customers` | Lấy danh sách khách hàng (phân trang) |
-| GET | `/api/customers/:id` | Lấy chi tiết khách hàng theo ID |
-| GET | `/api/customers/email/:email` | Tìm khách hàng theo email |
-| PUT | `/api/customers/:id` | Cập nhật thông tin khách hàng |
-| DELETE | `/api/customers/:id` | Xóa khách hàng |
+| Method | Endpoint                      | Description                           |
+| ------ | ----------------------------- | ------------------------------------- |
+| POST   | `/api/customers`              | Tạo khách hàng mới                    |
+| GET    | `/api/customers`              | Lấy danh sách khách hàng (phân trang) |
+| GET    | `/api/customers/:id`          | Lấy chi tiết khách hàng theo ID       |
+| GET    | `/api/customers/email/:email` | Tìm khách hàng theo email             |
+| PUT    | `/api/customers/:id`          | Cập nhật thông tin khách hàng         |
+| DELETE | `/api/customers/:id`          | Xóa khách hàng                        |
 
 ### 🔹 Live Chat Module APIs
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/chat/sessions/active` | Lấy danh sách chat sessions đang active |
-| GET | `/api/chat/sessions/:id` | Lấy thông tin chi tiết session |
-| GET | `/api/chat/sessions/:id/messages` | Lấy lịch sử chat |
-| POST | `/api/chat/sessions/:id/close` | Đóng chat session |
-| POST | `/api/chat/sessions/:id/assign` | Gán agent vào session |
+| Method | Endpoint                          | Description                             |
+| ------ | --------------------------------- | --------------------------------------- |
+| GET    | `/api/chat/sessions/active`       | Lấy danh sách chat sessions đang active |
+| GET    | `/api/chat/sessions/:id`          | Lấy thông tin chi tiết session          |
+| GET    | `/api/chat/sessions/:id/messages` | Lấy lịch sử chat                        |
+| POST   | `/api/chat/sessions/:id/close`    | Đóng chat session                       |
+| POST   | `/api/chat/sessions/:id/assign`   | Gán agent vào session                   |
 
 **WebSocket Endpoint:** `ws://localhost:3000/chat`
 
 ### 🔹 Tickets Module APIs
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/tickets` | Tạo ticket mới |
-| POST | `/api/tickets/convert-from-chat/:sessionId` | Convert chat thành ticket |
-| GET | `/api/tickets` | Lấy danh sách tickets (có filter) |
-| GET | `/api/tickets/:id` | Lấy chi tiết ticket |
-| GET | `/api/tickets/number/:ticketNumber` | Tìm ticket theo số (TK-00001) |
-| GET | `/api/tickets/customer/:customerId` | Lấy tất cả tickets của customer |
-| PUT | `/api/tickets/:id` | Cập nhật ticket (status, priority) |
-| POST | `/api/tickets/:id/comments` | Thêm comment vào ticket |
-| GET | `/api/tickets/:id/comments` | Lấy danh sách comments |
-| DELETE | `/api/tickets/:id` | Đóng ticket (soft delete) |
+| Method | Endpoint                                    | Description                        |
+| ------ | ------------------------------------------- | ---------------------------------- |
+| POST   | `/api/tickets`                              | Tạo ticket mới                     |
+| POST   | `/api/tickets/convert-from-chat/:sessionId` | Convert chat thành ticket          |
+| GET    | `/api/tickets`                              | Lấy danh sách tickets (có filter)  |
+| GET    | `/api/tickets/:id`                          | Lấy chi tiết ticket                |
+| GET    | `/api/tickets/number/:ticketNumber`         | Tìm ticket theo số (TK-00001)      |
+| GET    | `/api/tickets/customer/:customerId`         | Lấy tất cả tickets của customer    |
+| PUT    | `/api/tickets/:id`                          | Cập nhật ticket (status, priority) |
+| POST   | `/api/tickets/:id/comments`                 | Thêm comment vào ticket            |
+| GET    | `/api/tickets/:id/comments`                 | Lấy danh sách comments             |
+| DELETE | `/api/tickets/:id`                          | Đóng ticket (soft delete)          |
 
 ### 🔹 Integration Module APIs
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/timeline/customer/:customerId` | Lấy timeline 360° của customer |
-| GET | `/api/timeline/customer/:customerId/stats` | Thống kê tổng quan customer |
-| GET | `/api/timeline/recent?limit=20` | Timeline gần đây (dashboard) |
-| GET | `/api/timeline/event/:eventId?type=chat` | Chi tiết một event trong timeline |
+| Method | Endpoint                                   | Description                       |
+| ------ | ------------------------------------------ | --------------------------------- |
+| GET    | `/api/timeline/customer/:customerId`       | Lấy timeline 360° của customer    |
+| GET    | `/api/timeline/customer/:customerId/stats` | Thống kê tổng quan customer       |
+| GET    | `/api/timeline/recent?limit=20`            | Timeline gần đây (dashboard)      |
+| GET    | `/api/timeline/event/:eventId?type=chat`   | Chi tiết một event trong timeline |
 
 **Notification WebSocket:** `ws://localhost:3000/notifications`
 
@@ -220,6 +285,7 @@ npm run dev
 ## 🧪 Testing Guide
 
 ### 1. Test CRM & Tickets APIs với Postman
+
 - Import collection: `postman-collection.json`
 - Đảm bảo server đang chạy: `npm run start:dev`
 - Test các endpoints theo thứ tự trong collection
@@ -227,12 +293,14 @@ npm run dev
 ### 2. Test Live Chat Real-time
 
 #### Bước 1: Khởi động server
+
 ```bash
 cd backend
 npm run start:dev
 ```
 
 #### Bước 2: Test Customer Chat
+
 1. Mở file `chat-test.html` trong browser
 2. Nhập email: `customer@example.com`
 3. Nhập tên: `Customer Test`
@@ -241,6 +309,7 @@ npm run start:dev
 6. Gửi tin nhắn: "Xin chào, tôi cần hỗ trợ"
 
 #### Bước 3: Test Agent Support
+
 1. Mở file `agent-test.html` trong tab/browser mới
 2. Agent ID: `agent-001` (mặc định)
 3. Agent Name: `Support Agent` (mặc định)
@@ -252,12 +321,14 @@ npm run start:dev
 ### 3. Test Notifications Real-time
 
 #### Bước 1: Mở Notification Dashboard
+
 1. Mở file `notification-test.html` trong browser
 2. Agent ID: `agent-001`
 3. Click "Subscribe to Notifications"
 4. Status hiển thị: "Đã đăng ký thành công"
 
 #### Bước 2: Trigger Notifications
+
 - Tạo chat mới (dùng `chat-test.html`) → Agent nhận notification
 - Convert chat → ticket → Agent nhận notification
 - Update ticket status → Liên quan nhận notification
@@ -265,6 +336,7 @@ npm run start:dev
 ### 4. Test Timeline & 360° View
 
 Dùng Postman:
+
 1. Chạy request "29. Get Customer Timeline"
 2. Xem toàn bộ activities: chat, tickets, status changes
 3. Chạy request "30. Get Customer Stats"
@@ -275,6 +347,7 @@ Dùng Postman:
 ## 🗄️ Database Schema
 
 ### Customers
+
 ```sql
 - id: UUID (PK)
 - email: VARCHAR (UNIQUE)
@@ -286,6 +359,7 @@ Dùng Postman:
 ```
 
 ### ChatSessions
+
 ```sql
 - id: UUID (PK)
 - customer_id: UUID (FK → customers)
@@ -296,6 +370,7 @@ Dùng Postman:
 ```
 
 ### ChatMessages
+
 ```sql
 - id: UUID (PK)
 - session_id: UUID (FK → chat_sessions)
@@ -306,6 +381,7 @@ Dùng Postman:
 ```
 
 ### Tickets
+
 ```sql
 - id: UUID (PK)
 - ticket_number: VARCHAR (UNIQUE)
@@ -321,6 +397,7 @@ Dùng Postman:
 ```
 
 ### TicketComments
+
 ```sql
 - id: UUID (PK)
 - ticket_id: UUID (FK → tickets)
@@ -331,6 +408,7 @@ Dùng Postman:
 ```
 
 ### CustomerActivities
+
 ```sql
 - id: UUID (PK)
 - customer_id: UUID (FK → customers)
